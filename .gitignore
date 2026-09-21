@@ -52,3 +52,10 @@ next-env.d.ts
 /.impeccable
 /.windsurf
 /skills-lock.json
+
+# Appended by `vercel link`. Both are already covered above; the re-listed
+# `.env*` is kept last-match-wins safe by repeating the template exception,
+# otherwise it would silently re-ignore .env.example.
+.vercel
+.env*
+!.env.example
