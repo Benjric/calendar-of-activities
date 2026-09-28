@@ -34,7 +34,7 @@ export function NavLinks({
   ];
 
   return (
-    <nav className="flex flex-wrap items-center gap-0.5 text-sm">
+    <nav aria-label="Primary" className="flex flex-wrap items-center gap-1 text-sm">
       {items.map((item) => {
         const active =
           item.href === "/calendar"
@@ -44,10 +44,15 @@ export function NavLinks({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`rounded-md px-3 py-1.5 font-medium transition-colors ${
+            /*
+              The active tab is marked by a rule under the label rather than a
+              filled pill: the header already carries a filled primary button,
+              and a second filled shape competes with it for the same attention.
+            */
+            className={`flex h-11 items-center border-b-2 px-3.5 transition-colors ${
               active
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                ? "border-primary font-semibold text-foreground"
+                : "border-transparent font-medium text-[var(--body-muted)] hover:border-input hover:text-foreground"
             }`}
           >
             {item.label}

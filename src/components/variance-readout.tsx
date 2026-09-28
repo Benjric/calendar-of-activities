@@ -19,10 +19,22 @@ import {
  * never as a Gap equal to the whole target.
  */
 
+/*
+ * Gain reads blue and Gap orange rather than green and red: the pair is the
+ * one comparison in this product a reader with red-green colour blindness
+ * would otherwise have to take on trust. The mark and the word carry it too.
+ */
 const OUTCOME_STYLE = {
   GAIN: "text-[var(--gain)]",
   GAP: "text-[var(--gap)]",
   MET: "text-[var(--met)]",
+} as const;
+
+/* The same three, as a tinted pill for the heading row. */
+const OUTCOME_BADGE = {
+  GAIN: "bg-[var(--gain-bg)] text-[var(--gain)]",
+  GAP: "bg-[var(--gap-bg)] text-[var(--gap)]",
+  MET: "bg-[var(--met-bg)] text-[var(--met)]",
 } as const;
 
 const OUTCOME_MARK = { GAIN: "▲", GAP: "▼", MET: "=" } as const;
@@ -58,7 +70,7 @@ export function VarianceReadout({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-sm font-medium">{label}</h3>
         <span
-          className={`inline-flex items-center gap-1.5 text-sm font-semibold ${OUTCOME_STYLE[variance.outcome]}`}
+          className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] font-bold ${OUTCOME_BADGE[variance.outcome]}`}
         >
           <span aria-hidden="true">{OUTCOME_MARK[variance.outcome]}</span>
           {OUTCOME_LABEL[variance.outcome]}

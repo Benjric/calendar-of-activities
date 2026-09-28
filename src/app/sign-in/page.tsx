@@ -32,7 +32,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
   return (
     <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)]">
       {/* Brand panel */}
-      <section className="relative hidden overflow-hidden bg-[oklch(0.28_0.07_258)] px-10 py-12 text-white lg:flex lg:flex-col">
+      <section className="relative hidden overflow-hidden bg-primary px-10 py-12 text-white lg:flex lg:flex-col">
         {/* A faint calendar grid, echoing the product itself. */}
         <div
           aria-hidden="true"

@@ -14,18 +14,29 @@ import { getSummary, listActivities, listUpcoming } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
+/*
+ * Bars are told apart by fill treatment as well as hue: Conducted is the only
+ * solid fill (it is settled), Planned is a flat tint (it is merely intended),
+ * and Rescheduled is a dashed tint (it has already moved once). Reading the
+ * month at a glance therefore never depends on separating blue from green.
+ */
 const STATUS_BAR = {
-  PLANNED: "bg-[var(--status-planned)]",
-  CONDUCTED: "bg-[var(--status-conducted)]",
-  RESCHEDULED: "bg-[var(--status-rescheduled)]",
-  DROPPED: "bg-[var(--status-dropped)]",
+  PLANNED:
+    "border border-[var(--status-planned-border)] bg-[var(--status-planned-bg)] text-[var(--status-planned)]",
+  CONDUCTED:
+    "border border-[var(--status-conducted-solid)] bg-[var(--status-conducted-solid)] text-white",
+  RESCHEDULED:
+    "border border-dashed border-[var(--status-rescheduled-border)] bg-[var(--status-rescheduled-bg)] text-[var(--status-rescheduled)]",
+  DROPPED:
+    "border border-[var(--status-dropped-border)] bg-[var(--status-dropped-bg)] text-[var(--status-dropped)]",
 } as const;
 
+/* Solid at this size — a 6px tint is invisible against the card. */
 const STATUS_DOT = {
-  PLANNED: "bg-[var(--status-planned)]",
-  CONDUCTED: "bg-[var(--status-conducted)]",
-  RESCHEDULED: "bg-[var(--status-rescheduled)]",
-  DROPPED: "bg-[var(--status-dropped)]",
+  PLANNED: "bg-[var(--status-planned-solid)]",
+  CONDUCTED: "bg-[var(--status-conducted-solid)]",
+  RESCHEDULED: "bg-[var(--status-rescheduled-solid)]",
+  DROPPED: "bg-[var(--status-dropped-solid)]",
 } as const;
 
 export default async function CalendarPage({ searchParams }: PageProps<"/calendar">) {
@@ -82,31 +93,31 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
       {/* Toolbar */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
+          <p className="eyebrow">
             {inMonth.length === 0
               ? "No activities"
               : `${inMonth.length} ${inMonth.length === 1 ? "activity" : "activities"}`}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-3">
-            <h1 className="text-[26px] leading-none font-semibold tracking-tight">
+          <div className="mt-2.5 flex flex-wrap items-center gap-5">
+            <h1 className="font-heading text-[42px] leading-none">
               {monthName(month)}{" "}
               <span className="text-muted-foreground tabular-nums">{year}</span>
             </h1>
-            <div className="flex items-center rounded-lg border border-[var(--grid-line)] bg-card p-0.5">
+            <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-0.75">
               <Link
                 href={`/calendar?y=${prev.year}&m=${prev.month}`}
                 aria-label="Previous month"
-                className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="grid size-9 place-items-center rounded-[9px] text-[var(--body-muted)] transition-colors hover:bg-accent hover:text-foreground"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m15 18-6-6 6-6" /></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4.5"><path d="m15 18-6-6 6-6" /></svg>
               </Link>
               <Link
                 href="/calendar"
                 aria-current={isCurrentMonth ? "true" : undefined}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-[9px] px-3.5 py-2 text-sm font-semibold transition-colors ${
                   isCurrentMonth
-                    ? "text-muted-foreground"
-                    : "hover:bg-accent"
+                    ? "bg-[var(--subtle)] text-foreground"
+                    : "text-[var(--body-muted)] hover:bg-accent hover:text-foreground"
                 }`}
               >
                 Today
@@ -114,9 +125,9 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
               <Link
                 href={`/calendar?y=${next.year}&m=${next.month}`}
                 aria-label="Next month"
-                className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="grid size-9 place-items-center rounded-[9px] text-[var(--body-muted)] transition-colors hover:bg-accent hover:text-foreground"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4"><path d="m9 18 6-6-6-6" /></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4.5"><path d="m9 18 6-6-6-6" /></svg>
               </Link>
             </div>
           </div>
@@ -165,7 +176,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
               {WEEKDAY_LABELS.map((label, i) => (
                 <div
                   key={label}
-                  className={`px-2.5 py-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase ${
+                  className={`eyebrow px-3 py-2.5 ${
                     i >= 5 ? "bg-[var(--weekend-bg)]" : ""
                   }`}
                 >
@@ -195,20 +206,20 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                           key={cell.date.toISOString()}
                           className={`border-r border-[var(--grid-line)] px-2 pt-2 pb-1 last:border-r-0 ${
                             !cell.inMonth
-                              ? "bg-[var(--app-bg)]"
+                              ? "bg-[var(--outside-bg)]"
                               : di >= 5
                                 ? "bg-[var(--weekend-bg)]"
                                 : ""
                           }`}
-                          style={{ minHeight: `${52 + laneCount * 26}px` }}
+                          style={{ minHeight: `${54 + laneCount * 28}px` }}
                         >
                           <span
-                            className={`inline-grid h-6 min-w-6 place-items-center rounded-full px-1 text-xs tabular-nums ${
+                            className={`inline-grid h-7 min-w-7 place-items-center rounded-full px-1 text-[13px] tabular-nums ${
                               cell.isToday
-                                ? "bg-primary font-semibold text-primary-foreground"
+                                ? "bg-primary font-bold text-primary-foreground"
                                 : cell.inMonth
-                                  ? "font-medium text-foreground"
-                                  : "text-muted-foreground/60"
+                                  ? "font-semibold text-foreground"
+                                  : "font-normal text-muted-foreground"
                             }`}
                           >
                             {cell.date.getUTCDate()}
@@ -230,15 +241,15 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                             style={{
                               left: `${(seg.startCol / 7) * 100}%`,
                               width: `${(seg.span / 7) * 100}%`,
-                              top: `${seg.lane * 26}px`,
+                              top: `${seg.lane * 28}px`,
                             }}
                           >
                             <Link
                               href={`/activities/${a.id}`}
                               title={`${a.title} · ${formatDateRange(a.startDate, a.endDate)} · ${STATUS_LABEL[a.status]}`}
-                              className={`group flex h-[22px] items-center gap-1.5 px-2 text-[11px] font-medium text-white shadow-[0_1px_2px_-1px_oklch(0.21_0.02_260/0.35)] transition-[filter,transform] hover:brightness-108 active:translate-y-px ${STATUS_BAR[a.status]} ${
-                                seg.continuesLeft ? "" : "rounded-l-[5px]"
-                              } ${seg.continuesRight ? "" : "rounded-r-[5px]"}`}
+                              className={`group flex h-6 items-center gap-1.5 px-2 text-[11px] font-semibold transition-[filter,transform] hover:brightness-97 active:translate-y-px ${STATUS_BAR[a.status]} ${
+                                seg.continuesLeft ? "border-l-0" : "rounded-l-[6px]"
+                              } ${seg.continuesRight ? "border-r-0" : "rounded-r-[6px]"}`}
                             >
                               {seg.continuesLeft && (
                                 <span aria-hidden="true" className="-ml-0.5 opacity-70">‹</span>
@@ -250,9 +261,12 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                                 </span>
                               )}
                               {a._count.conflictOverrides > 0 && (
+                                /* Solid, not a wash of the bar: three of the
+                                   four bars are now tinted, and a translucent
+                                   white chip disappears on all of them. */
                                 <span
                                   title="Booked over a recorded conflict"
-                                  className="ml-auto grid size-3.5 shrink-0 place-items-center rounded-full bg-white/25 text-[9px] font-bold"
+                                  className="ml-auto grid size-4 shrink-0 place-items-center rounded-[4px] bg-[var(--conflict)] text-[10px] font-extrabold text-white"
                                 >
                                   !
                                 </span>

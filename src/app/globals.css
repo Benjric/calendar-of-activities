@@ -8,8 +8,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-heading);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,100 +48,194 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+  Palette: warm paper ground, ink text, one navy accent. Statuses and variance
+  outcomes are told apart by lightness as well as hue, and Gain/Gap use
+  blue/orange rather than green/red so the two never rest on colour vision
+  alone.
+*/
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.21 0.02 260);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.02 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.02 260);
-  --primary: oklch(0.45 0.16 258);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Page ground and raised surfaces. Cards sit a step lighter than the page. */
+  --app-bg: #f4f1e9;
+  --background: #fffefa;
+  --foreground: #1b2230;
+  --card: #fffefa;
+  --card-foreground: #1b2230;
+  --popover: #fffefa;
+  --popover-foreground: #1b2230;
 
-  /* Activity lifecycle. Each status also carries a text label and an icon in
-     the UI, so colour is never the sole signal. */
-  --status-planned: oklch(0.55 0.12 250);
-  --status-planned-bg: oklch(0.96 0.03 250);
-  --status-conducted: oklch(0.52 0.13 155);
-  --status-conducted-bg: oklch(0.96 0.04 155);
-  --status-rescheduled: oklch(0.62 0.14 70);
-  --status-rescheduled-bg: oklch(0.96 0.05 80);
-  --status-dropped: oklch(0.52 0.02 260);
-  --status-dropped-bg: oklch(0.96 0.005 260);
+  --primary: #1e3a5f;
+  --primary-foreground: #fffefa;
+  --primary-hover: #142842;
 
-  /* Variance outcomes: Gain / Gap / Met. */
-  --gain: oklch(0.52 0.13 155);
-  --gap: oklch(0.55 0.19 25);
-  --met: oklch(0.52 0.02 260);
+  /* Two steps of quiet text: body-secondary, then captions. */
+  --body-muted: #474e5c;
+  --muted-foreground: #5e6472;
 
-  --conflict: oklch(0.55 0.19 25);
-  --conflict-bg: oklch(0.97 0.03 25);
+  /* Rules. `--border` outlines surfaces, `--input` outlines controls (it must
+     carry 3:1 against the card to be a visible affordance), `--grid-line`
+     divides content inside a surface. */
+  --border: #e0dacb;
+  --input: #c9c0ac;
+  --grid-line: #e6e0d3;
+  --ring: #c9c0ac;
+  --ring-strong: #1e3a5f;
 
-  /* Page ground, one step below card white. */
-  --app-bg: oklch(0.975 0.003 260);
-  --weekend-bg: oklch(0.985 0.004 260);
-  --ring-strong: oklch(0.55 0.15 258);
-  --scroll-thumb: oklch(0.82 0.012 260);
-  --scroll-thumb-hover: oklch(0.72 0.016 260);
-  --grid-line: oklch(0.925 0.005 260);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* Tinted neutrals drawn from the paper ground. */
+  --secondary: #ede9de;
+  --secondary-foreground: #1b2230;
+  --muted: #ede9de;
+  --accent: #ede9de;
+  --accent-foreground: #1b2230;
+  --subtle: #ede9de;
+  --avatar-bg: #e3dccb;
+  --weekend-bg: #f8f5ee;
+  --outside-bg: #efebe1;
+
+  /* Activity lifecycle. Each status also carries a text label and a mark in
+     the UI, so colour is never the sole signal. `-solid` is the filled
+     calendar bar; the rest tint a badge. */
+  --status-planned: #1d3f6e;
+  --status-planned-bg: #e3ebf6;
+  --status-planned-border: #9db5d8;
+  --status-planned-solid: #2a5794;
+  --status-conducted: #22553a;
+  --status-conducted-bg: #e2efe7;
+  --status-conducted-border: #9cc3ac;
+  --status-conducted-solid: #2d6a4a;
+  --status-rescheduled: #6e4209;
+  --status-rescheduled-bg: #fbebd2;
+  --status-rescheduled-border: #b8731a;
+  --status-rescheduled-solid: #b8731a;
+  --status-dropped: #5e6472;
+  --status-dropped-bg: #f1eee5;
+  --status-dropped-border: #c9c0ac;
+  --status-dropped-solid: #857d69;
+
+  /* Variance outcomes: Gain / Gap / Met. Blue over green, orange over red. */
+  --gain: #174d80;
+  --gain-bg: #e4eef8;
+  --gain-solid: #1f5e99;
+  --gap: #8f3d0c;
+  --gap-bg: #fbe9dc;
+  --gap-solid: #b8581a;
+  --met: #474e5c;
+  --met-bg: #ede9de;
+
+  /* Collisions. A booking may continue over one, so this warns, never blocks. */
+  --conflict: #a8361b;
+  --conflict-text: #8e2c15;
+  --conflict-bg: #fae8e1;
+  --conflict-border: #e7b9a8;
+  --destructive: #a8361b;
+
+  --scroll-thumb: #d5cdba;
+  --scroll-thumb-hover: #bdb39b;
+
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  --chart-1: #1e3a5f;
+  --chart-2: #2d6a4a;
+  --chart-3: #b8731a;
+  --chart-4: #5e6472;
+  --chart-5: #a8361b;
+
+  --sidebar: #fffefa;
+  --sidebar-foreground: #1b2230;
+  --sidebar-primary: #1e3a5f;
+  --sidebar-primary-foreground: #fffefa;
+  --sidebar-accent: #ede9de;
+  --sidebar-accent-foreground: #1b2230;
+  --sidebar-border: #e0dacb;
+  --sidebar-ring: #1e3a5f;
 }
 
+/*
+  Dark counterpart. The ground keeps the warm cast so the two themes read as
+  one product; every tinted status is re-derived against the dark card rather
+  than reused, which would fail contrast.
+*/
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --app-bg: #16181c;
+  --background: #1e2127;
+  --foreground: #f1efe8;
+  --card: #1e2127;
+  --card-foreground: #f1efe8;
+  --popover: #1e2127;
+  --popover-foreground: #f1efe8;
+
+  --primary: #9dc0e8;
+  --primary-foreground: #12202f;
+  --primary-hover: #b6d2f2;
+
+  --body-muted: #c2c6cf;
+  --muted-foreground: #9aa0ad;
+
+  --border: #343841;
+  --input: #4a4f5a;
+  --grid-line: #2c3038;
+  --ring: #4a4f5a;
+  --ring-strong: #9dc0e8;
+
+  --secondary: #2a2e36;
+  --secondary-foreground: #f1efe8;
+  --muted: #2a2e36;
+  --accent: #2a2e36;
+  --accent-foreground: #f1efe8;
+  --subtle: #2a2e36;
+  --avatar-bg: #3a3f49;
+  --weekend-bg: #1a1d22;
+  --outside-bg: #191b20;
+
+  --status-planned: #a9c7ec;
+  --status-planned-bg: #1c2a3d;
+  --status-planned-border: #3f5a7e;
+  --status-planned-solid: #4a7ab5;
+  --status-conducted: #8fcaa6;
+  --status-conducted-bg: #162b20;
+  --status-conducted-border: #35573f;
+  --status-conducted-solid: #3c8a60;
+  --status-rescheduled: #e3b478;
+  --status-rescheduled-bg: #2e2312;
+  --status-rescheduled-border: #6e4f21;
+  --status-rescheduled-solid: #b8731a;
+  --status-dropped: #9aa0ad;
+  --status-dropped-bg: #24272e;
+  --status-dropped-border: #454a55;
+  --status-dropped-solid: #6b7180;
+
+  --gain: #8fbde8;
+  --gain-bg: #172636;
+  --gain-solid: #3d7cb5;
+  --gap: #e3a271;
+  --gap-bg: #2e1e12;
+  --gap-solid: #b8581a;
+  --met: #9aa0ad;
+  --met-bg: #2a2e36;
+
+  --conflict: #e8896f;
+  --conflict-text: #efa793;
+  --conflict-bg: #2f1a14;
+  --conflict-border: #6b3427;
+  --destructive: #e8896f;
+
+  --scroll-thumb: #3d424c;
+  --scroll-thumb-hover: #515764;
+
+  --chart-1: #9dc0e8;
+  --chart-2: #8fcaa6;
+  --chart-3: #e3b478;
+  --chart-4: #9aa0ad;
+  --chart-5: #e8896f;
+
+  --sidebar: #1e2127;
+  --sidebar-foreground: #f1efe8;
+  --sidebar-primary: #9dc0e8;
+  --sidebar-primary-foreground: #12202f;
+  --sidebar-accent: #2a2e36;
+  --sidebar-accent-foreground: #f1efe8;
+  --sidebar-border: #343841;
+  --sidebar-ring: #9dc0e8;
 }
 
 @layer base {
@@ -151,7 +245,7 @@
 
   html {
     @apply font-sans;
-    /* Off-white ground so white cards read as raised surfaces rather than
+    /* Warm paper ground so white cards read as raised surfaces rather than
        dissolving into the page. */
     background-color: var(--app-bg);
   }
@@ -159,6 +253,16 @@
   body {
     @apply text-foreground;
     background-color: var(--app-bg);
+  }
+
+  /* The display serif carries headings only. Body copy stays on the sans so
+     long prose never sits in a face cut for large sizes. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.015em;
   }
 
   /* Browser surfaces ship with defaults belonging to no design system. Theming
@@ -208,19 +312,33 @@
   .surface {
     background-color: var(--card);
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    box-shadow:
-      0 1px 2px -1px oklch(0.21 0.02 260 / 0.09),
-      0 2px 6px -2px oklch(0.21 0.02 260 / 0.07);
+    border-radius: 0.875rem;
+    box-shadow: 0 1px 2px -1px rgb(27 34 48 / 0.07);
   }
 
   .surface-raised {
     background-color: var(--card);
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
+    border-radius: 0.875rem;
     box-shadow:
-      0 1px 2px -1px oklch(0.21 0.02 260 / 0.1),
-      0 6px 16px -6px oklch(0.21 0.02 260 / 0.14),
-      0 12px 32px -12px oklch(0.21 0.02 260 / 0.1);
+      0 1px 2px -1px rgb(27 34 48 / 0.1),
+      0 6px 16px -6px rgb(27 34 48 / 0.14),
+      0 12px 32px -12px rgb(27 34 48 / 0.1);
+  }
+
+  /* The eyebrow above a card or a section: the smallest type in the product,
+     so it takes weight and tracking rather than size to stay legible. */
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  /* Figures meant to be compared down a column, never body copy. */
+  .figure {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
   }
 }

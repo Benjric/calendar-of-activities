@@ -246,7 +246,7 @@ export function AccountManager({ accounts, lookups, currentUserId }: Props) {
         <button
           type="button"
           onClick={openNew}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground shadow-[0_1px_2px_-1px_oklch(0.21_0.02_260/0.3)] transition-[opacity,transform] hover:opacity-92 active:translate-y-px"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-[var(--primary-hover)] active:translate-y-px"
         >
           <svg
             viewBox="0 0 24 24"

@@ -14,15 +14,24 @@ const MARK: Record<Status, string> = {
   DROPPED: "×",
 };
 
+/*
+ * Each status owns an explicit border rather than a tint of its own text
+ * colour: a 25% wash of the label reads as the same grey on all four and
+ * loses the distinction the badge exists to make.
+ *
+ * Rescheduled is dashed as well as amber — a date that has moved is the one
+ * state worth spotting without reading, and the dash says "provisional" where
+ * hue alone would not.
+ */
 const STYLE: Record<Status, string> = {
   PLANNED:
-    "text-[var(--status-planned)] bg-[var(--status-planned-bg)] border-[var(--status-planned)]/25",
+    "text-[var(--status-planned)] bg-[var(--status-planned-bg)] border-[var(--status-planned-border)]",
   CONDUCTED:
-    "text-[var(--status-conducted)] bg-[var(--status-conducted-bg)] border-[var(--status-conducted)]/25",
+    "text-[var(--status-conducted)] bg-[var(--status-conducted-bg)] border-[var(--status-conducted-border)]",
   RESCHEDULED:
-    "text-[var(--status-rescheduled)] bg-[var(--status-rescheduled-bg)] border-[var(--status-rescheduled)]/25",
+    "text-[var(--status-rescheduled)] bg-[var(--status-rescheduled-bg)] border-dashed border-[var(--status-rescheduled-border)]",
   DROPPED:
-    "text-[var(--status-dropped)] bg-[var(--status-dropped-bg)] border-[var(--status-dropped)]/25",
+    "text-[var(--status-dropped)] bg-[var(--status-dropped-bg)] border-[var(--status-dropped-border)]",
 };
 
 export function StatusBadge({
@@ -34,7 +43,7 @@ export function StatusBadge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium whitespace-nowrap ${STYLE[status]} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${STYLE[status]} ${className}`}
     >
       <span aria-hidden="true">{MARK[status]}</span>
       {STATUS_LABEL[status]}
