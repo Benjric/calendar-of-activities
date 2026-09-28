@@ -172,13 +172,39 @@ async function main() {
     },
   });
 
+  // PLANNED but already over — the "Awaiting a status" case. An activity
+  // nobody closed out is the one state that is quietly wrong, so the
+  // calendar has to have an example of it to render against.
+  const overdue = await prisma.activity.create({
+    data: {
+      title: "[SAMPLE] Policy Orientation on Data Privacy",
+      programId: programs.get("Policy Orientation"),
+      startDate: d(2026, 9, 22),
+      endDate: d(2026, 9, 23),
+      venueId: venues.get("Online / MS Teams"),
+      leadDivisionId: divisions.get("ADMIN"),
+      focalPersonId: people.get("Ramon Dela Cruz"),
+      type: "NON_LND",
+      performanceIndicator: "No. of staff oriented",
+      hasFinancialReq: false,
+      status: "PLANNED",
+      participants: { create: [{ personId: people.get("Liza Mendoza")! }] },
+    },
+  });
+
   // RESCHEDULED — carries a catch-up plan row.
+  //
+  // It sits at the dates of its LATEST postponement, because that is where
+  // `rescheduleActivity` leaves an activity: the record is the history, the
+  // activity's own dates are the present. Seeding it anywhere else would make
+  // the catch-up plan's slip arithmetic read against data the app never
+  // actually produces.
   const rescheduled = await prisma.activity.create({
     data: {
       title: "[SAMPLE] Records Management Workshop",
       programId: programs.get("Technical Skills Enhancement"),
-      startDate: d(2026, 10, 5),
-      endDate: d(2026, 10, 7),
+      startDate: d(2026, 11, 9),
+      endDate: d(2026, 11, 11),
       venueId: venues.get("Conference Room B"),
       leadDivisionId: divisions.get("ADMIN"),
       focalPersonId: people.get("Liza Mendoza"),
@@ -191,15 +217,28 @@ async function main() {
     },
   });
 
-  await prisma.rescheduleRecord.create({
-    data: {
-      activityId: rescheduled.id,
-      reasonForPostponement: "Resource speaker unavailable due to a conflicting regional activity.",
-      previousStartDate: d(2026, 10, 5),
-      previousEndDate: d(2026, 10, 7),
-      proposedStartDate: d(2026, 11, 9),
-      proposedEndDate: d(2026, 11, 11),
-    },
+  // Two postponements, so the timeline has a history to draw rather than a
+  // single hop — the case the catch-up plan exists for.
+  await prisma.rescheduleRecord.createMany({
+    data: [
+      {
+        activityId: rescheduled.id,
+        reasonForPostponement: "Multipurpose Hall was still under repair.",
+        previousStartDate: d(2026, 8, 24),
+        previousEndDate: d(2026, 8, 26),
+        proposedStartDate: d(2026, 10, 5),
+        proposedEndDate: d(2026, 10, 7),
+      },
+      {
+        activityId: rescheduled.id,
+        reasonForPostponement:
+          "Resource speaker unavailable due to a conflicting regional activity.",
+        previousStartDate: d(2026, 10, 5),
+        previousEndDate: d(2026, 10, 7),
+        proposedStartDate: d(2026, 11, 9),
+        proposedEndDate: d(2026, 11, 11),
+      },
+    ],
   });
 
   await prisma.statusHistory.create({
@@ -229,7 +268,54 @@ async function main() {
     data: { activityId: dropped.id, fromStatus: "PLANNED", toStatus: "DROPPED" },
   });
 
-  console.log("  activities: 4 samples (conducted, planned, rescheduled, dropped)");
+  // A booking that was made over a known collision. These are not errors —
+  // concurrent activities are sometimes intentional — so the system records
+  // the decision rather than preventing it, and the calendar flags it.
+  await prisma.conflictOverride.create({
+    data: {
+      activityId: overdue.id,
+      kind: "DATE",
+      details:
+        "Records Management Workshop (ADMIN) also ran on Tue 22 Sep 2026.",
+      conflictingActivityIds: [rescheduled.id],
+    },
+  });
+
+  // Completion Report and MOVs for the conducted activity. `.invalid` is
+  // reserved for exactly this: a URL that is unmistakably not a real upload.
+  await prisma.attachment.createMany({
+    data: [
+      {
+        activityId: conducted.id,
+        kind: "COMPLETION_REPORT",
+        fileName: "Completion Report — Instructional Leadership.pdf",
+        url: "https://placeholder.invalid/sample-completion-report.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 1_260_000,
+      },
+      {
+        activityId: conducted.id,
+        kind: "MOV",
+        fileName: "Attendance sheets, Days 1–3.pdf",
+        url: "https://placeholder.invalid/sample-attendance.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 3_410_000,
+      },
+      {
+        activityId: conducted.id,
+        kind: "MOV",
+        fileName: "Session photos.zip",
+        url: "https://placeholder.invalid/sample-photos.zip",
+        mimeType: "application/zip",
+        sizeBytes: 18_700_000,
+      },
+    ],
+  });
+
+  console.log(
+    "  activities: 5 samples (conducted, planned, overdue, rescheduled, dropped)",
+  );
+  console.log("  + 1 conflict override, 3 attachments");
 
   // --- Accounts -----------------------------------------------------------
   // Development credentials only. Change these before the system is used.

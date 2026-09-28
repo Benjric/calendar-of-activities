@@ -187,8 +187,44 @@ export async function listCatchUpPlan() {
     include: {
       leadDivision: { select: { name: true, acronym: true } },
       venue: { select: { name: true } },
-      reschedules: { orderBy: { createdAt: "desc" } },
+      reschedules: { orderBy: { createdAt: "asc" } },
     },
     orderBy: { startDate: "asc" },
+  });
+}
+
+/**
+ * Activities that have already ended but are still marked Planned.
+ *
+ * Nobody decides to leave these behind — an activity happens, everyone moves
+ * on, and the record quietly keeps saying "Planned". The accomplishment report
+ * is then wrong in a way no one is looking at, so the calendar has to raise it
+ * rather than wait to be asked.
+ */
+export async function listAwaitingStatus(today: Date) {
+  return prisma.activity.findMany({
+    where: { archivedAt: null, status: "PLANNED", endDate: { lt: today } },
+    select: LIST_SELECT,
+    orderBy: { endDate: "asc" },
+  });
+}
+
+/** The window the rail shows: anything overlapping today through today+days. */
+export async function listWindow(from: Date, days = 7) {
+  const to = new Date(from);
+  to.setUTCDate(to.getUTCDate() + days);
+  return prisma.activity.findMany({
+    where: { archivedAt: null, startDate: { lte: to }, endDate: { gte: from } },
+    select: LIST_SELECT,
+    orderBy: [{ startDate: "asc" }, { title: "asc" }],
+  });
+}
+
+/** Divisions that can lead an activity, for the calendar's filter. */
+export async function listDivisions() {
+  return prisma.division.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true, acronym: true },
+    orderBy: { name: "asc" },
   });
 }

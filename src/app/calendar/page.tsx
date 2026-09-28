@@ -1,24 +1,31 @@
 import Link from "next/link";
 
-import { StatusBadge } from "@/components/status-badge";
+import { CalendarFilters } from "@/components/calendar-filters";
+import { SelectedActivity } from "@/components/selected-activity";
 import { buildMonthGrid, WEEKDAY_LABELS, normaliseMonth } from "@/lib/calendar";
 import {
   dayCount,
+  formatDate,
   formatDateRange,
   monthName,
   STATUS_LABEL,
-  TYPE_LABEL,
 } from "@/lib/format";
 import { canManageActivities, requireUser } from "@/lib/authz";
-import { getSummary, listActivities, listUpcoming } from "@/lib/queries";
+import {
+  getSummary,
+  listActivities,
+  listAwaitingStatus,
+  listDivisions,
+  listWindow,
+} from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
 /*
  * Bars are told apart by fill treatment as well as hue: Conducted is the only
- * solid fill (it is settled), Planned is a flat tint (it is merely intended),
- * and Rescheduled is a dashed tint (it has already moved once). Reading the
- * month at a glance therefore never depends on separating blue from green.
+ * solid fill (it is settled), Planned a flat tint (merely intended), and
+ * Rescheduled a dashed tint (it has already moved once). Reading the month at
+ * a glance therefore never depends on separating blue from green.
  */
 const STATUS_BAR = {
   PLANNED:
@@ -39,6 +46,19 @@ const STATUS_DOT = {
   DROPPED: "bg-[var(--status-dropped-solid)]",
 } as const;
 
+const FILTERABLE = ["PLANNED", "CONDUCTED", "RESCHEDULED"] as const;
+type Filterable = (typeof FILTERABLE)[number];
+
+/** Long form for the eyebrow: "Monday 28 September". */
+function today(date: Date): string {
+  return date.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
+}
+
 export default async function CalendarPage({ searchParams }: PageProps<"/calendar">) {
   const user = await requireUser();
   const canManage = canManageActivities(user.role);
@@ -56,48 +76,96 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
     Number.isFinite(rawMonth) ? rawMonth : now.getUTCMonth(),
   );
 
+  /*
+   * Filters live in the URL rather than component state: a filtered month is
+   * then a link somebody can send to the person who needs to look at it, and
+   * the grid stays a Server Component.
+   *
+   * `hide` carries the statuses switched OFF, so the default empty URL shows
+   * everything — the opposite would make "no filter" and "all filters off"
+   * the same string.
+   */
+  const hidden = new Set(
+    String(params.hide ?? "")
+      .split(",")
+      .filter((s): s is Filterable =>
+        (FILTERABLE as readonly string[]).includes(s),
+      ),
+  );
+  const divisionId = typeof params.div === "string" ? params.div : "";
+  const selectedId = typeof params.sel === "string" ? params.sel : "";
+
   const monthStart = new Date(Date.UTC(year, month, 1));
   const monthEnd = new Date(Date.UTC(year, month + 1, 0));
   const from = new Date(Date.UTC(year, month - 1, 1));
   const to = new Date(Date.UTC(year, month + 2, 0));
 
-  const [activities, summary, upcoming] = await Promise.all([
-    listActivities({ from, to }),
+  const [all, summary, windowed, awaiting, divisions] = await Promise.all([
+    listActivities({ from, to, ...(divisionId ? { divisionId } : {}) }),
     getSummary(),
-    listUpcoming(todayUTC),
+    listWindow(todayUTC, 7),
+    listAwaitingStatus(todayUTC),
+    listDivisions(),
   ]);
 
+  const activities = all.filter((a) => !hidden.has(a.status as Filterable));
   const weeks = buildMonthGrid(year, month, activities, now);
 
   const inMonth = activities.filter(
     (a) => a.startDate <= monthEnd && a.endDate >= monthStart,
   );
 
+  /* Counts are of everything in range, not of what survived the filter —
+     a chip that showed "0" whenever it was switched off could not be used
+     to decide whether switching it back on is worth it. */
+  const counts = FILTERABLE.reduce(
+    (acc, s) => {
+      acc[s] = all.filter((a) => a.status === s).length;
+      return acc;
+    },
+    {} as Record<Filterable, number>,
+  );
+
+  const awaitingIds = new Set(awaiting.map((a) => a.id));
+  const selected =
+    all.find((a) => a.id === selectedId) ??
+    awaiting.find((a) => a.id === selectedId) ??
+    windowed.find((a) => a.id === selectedId) ??
+    null;
+
   const prev = normaliseMonth(year, month - 1);
   const next = normaliseMonth(year, month + 1);
   const isCurrentMonth =
     year === now.getUTCFullYear() && month === now.getUTCMonth();
 
-  const stats = [
-    { label: "Planned", value: summary.planned, key: "PLANNED" as const },
-    { label: "Conducted", value: summary.conducted, key: "CONDUCTED" as const },
-    {
-      label: "Rescheduled",
-      value: summary.rescheduled,
-      key: "RESCHEDULED" as const,
-    },
-  ];
+  /** Keeps filters and selection intact when only the month changes. */
+  function monthHref(y: number, m: number) {
+    const q = new URLSearchParams();
+    q.set("y", String(y));
+    q.set("m", String(m));
+    if (hidden.size) q.set("hide", [...hidden].join(","));
+    if (divisionId) q.set("div", divisionId);
+    return `/calendar?${q}`;
+  }
+
+  /** Selecting a bar changes only `sel`, so filters survive the click. */
+  function selectHref(id: string) {
+    const q = new URLSearchParams();
+    if (!isCurrentMonth) {
+      q.set("y", String(year));
+      q.set("m", String(month));
+    }
+    if (hidden.size) q.set("hide", [...hidden].join(","));
+    if (divisionId) q.set("div", divisionId);
+    q.set("sel", id);
+    return `/calendar?${q}`;
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-5">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow">
-            {inMonth.length === 0
-              ? "No activities"
-              : `${inMonth.length} ${inMonth.length === 1 ? "activity" : "activities"}`}
-          </p>
+          <p className="eyebrow">Today · {today(todayUTC)}</p>
           <div className="mt-2.5 flex flex-wrap items-center gap-5">
             <h1 className="font-heading text-[42px] leading-none">
               {monthName(month)}{" "}
@@ -105,14 +173,14 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
             </h1>
             <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-0.75">
               <Link
-                href={`/calendar?y=${prev.year}&m=${prev.month}`}
+                href={monthHref(prev.year, prev.month)}
                 aria-label="Previous month"
                 className="grid size-9 place-items-center rounded-[9px] text-[var(--body-muted)] transition-colors hover:bg-accent hover:text-foreground"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4.5"><path d="m15 18-6-6 6-6" /></svg>
               </Link>
               <Link
-                href="/calendar"
+                href={monthHref(now.getUTCFullYear(), now.getUTCMonth())}
                 aria-current={isCurrentMonth ? "true" : undefined}
                 className={`rounded-[9px] px-3.5 py-2 text-sm font-semibold transition-colors ${
                   isCurrentMonth
@@ -123,7 +191,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                 Today
               </Link>
               <Link
-                href={`/calendar?y=${next.year}&m=${next.month}`}
+                href={monthHref(next.year, next.month)}
                 aria-label="Next month"
                 className="grid size-9 place-items-center rounded-[9px] text-[var(--body-muted)] transition-colors hover:bg-accent hover:text-foreground"
               >
@@ -133,42 +201,23 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
           </div>
         </div>
 
-        <div className="flex flex-wrap items-stretch gap-2">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="surface flex min-w-[104px] flex-col justify-center px-3 py-2"
-            >
-              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <span
-                  aria-hidden="true"
-                  className={`size-1.5 rounded-full ${STATUS_DOT[s.key]}`}
-                />
-                {s.label}
-              </span>
-              <span className="mt-0.5 font-mono text-xl leading-none font-semibold tabular-nums">
-                {s.value}
-              </span>
-            </div>
-          ))}
-          {canManage && summary.withOverrides > 0 && (
-            <Link
-              href="/conflicts"
-              className="flex min-w-[104px] flex-col justify-center rounded-xl border border-[var(--conflict)]/30 bg-[var(--conflict-bg)] px-3 py-2 transition-colors hover:border-[var(--conflict)]/50"
-            >
-              <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--conflict)]">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true" className="size-3"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
-                Conflicts
-              </span>
-              <span className="mt-0.5 font-mono text-xl leading-none font-semibold text-[var(--conflict)] tabular-nums">
-                {summary.withOverrides}
-              </span>
-            </Link>
-          )}
-        </div>
+        <p className="text-sm text-[var(--body-muted)]">
+          {inMonth.length === 0
+            ? "Nothing in this month"
+            : `${inMonth.length} ${inMonth.length === 1 ? "activity" : "activities"} in ${monthName(month)}`}
+        </p>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <CalendarFilters
+        counts={counts}
+        hidden={[...hidden]}
+        divisions={divisions}
+        divisionId={divisionId}
+        conflicts={canManage ? summary.withOverrides : 0}
+        dotClass={STATUS_DOT}
+      />
+
+      <div className="grid min-h-0 flex-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Month grid — stretches to fill the viewport down to the footer. */}
         <div className="flex min-h-[520px] flex-col overflow-x-auto">
           <div className="surface flex min-w-[820px] flex-1 flex-col overflow-hidden">
@@ -234,6 +283,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                       {week.segments.map((seg) => {
                         const a = seg.item;
                         const days = dayCount(a.startDate, a.endDate);
+                        const isSel = a.id === selectedId;
+                        const overdue = awaitingIds.has(a.id);
                         return (
                           <div
                             key={`${a.id}-${seg.startCol}`}
@@ -245,11 +296,16 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                             }}
                           >
                             <Link
-                              href={`/activities/${a.id}`}
+                              href={selectHref(a.id)}
+                              scroll={false}
                               title={`${a.title} · ${formatDateRange(a.startDate, a.endDate)} · ${STATUS_LABEL[a.status]}`}
                               className={`group flex h-6 items-center gap-1.5 px-2 text-[11px] font-semibold transition-[filter,transform] hover:brightness-97 active:translate-y-px ${STATUS_BAR[a.status]} ${
                                 seg.continuesLeft ? "border-l-0" : "rounded-l-[6px]"
-                              } ${seg.continuesRight ? "border-r-0" : "rounded-r-[6px]"}`}
+                              } ${seg.continuesRight ? "border-r-0" : "rounded-r-[6px]"} ${
+                                isSel
+                                  ? "ring-2 ring-foreground ring-offset-2 ring-offset-card"
+                                  : ""
+                              }`}
                             >
                               {seg.continuesLeft && (
                                 <span aria-hidden="true" className="-ml-0.5 opacity-70">‹</span>
@@ -258,6 +314,11 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                               {days > 1 && !seg.continuesLeft && (
                                 <span className="shrink-0 font-mono opacity-75 tabular-nums">
                                   {days}d
+                                </span>
+                              )}
+                              {overdue && !seg.continuesLeft && (
+                                <span className="shrink-0 rounded-[4px] bg-[var(--status-planned-solid)] px-1.5 py-px text-[9px] font-bold tracking-wide text-white">
+                                  UPDATE
                                 </span>
                               )}
                               {a._count.conflictOverrides > 0 && (
@@ -288,64 +349,87 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
 
         {/* Rail */}
         <aside className="space-y-4">
-          <section className="surface overflow-hidden">
-            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
-              {inMonth.length > 0 ? `In ${monthName(month)}` : "Coming up"}
-            </h2>
+          {selected && (
+            <SelectedActivity
+              activity={selected}
+              overdue={awaitingIds.has(selected.id)}
+            />
+          )}
 
-            {(inMonth.length > 0 ? inMonth : upcoming).length === 0 ? (
-              <div className="px-4 py-10 text-center">
-                <p className="text-sm font-medium">Nothing scheduled yet</p>
-                <p className="mx-auto mt-1 max-w-[30ch] text-xs text-muted-foreground">
-                  {canManage
-                    ? "Book an activity and the system will check the date, venue and participants against everything already committed."
-                    : "Nothing has been scheduled for this period yet."}
-                </p>
-                {canManage && (
-                  <Link
-                    href="/activities/new"
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-[var(--grid-line)] bg-card px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
-                  >
-                    Book an Activity
-                  </Link>
-                )}
-              </div>
-            ) : (
+          {/*
+            Placed above "Next 7 days" on purpose: an activity that has already
+            happened without a recorded outcome is the only thing on this page
+            that is quietly wrong, and it outranks what is merely coming up.
+          */}
+          {canManage && awaiting.length > 0 && (
+            <section className="surface overflow-hidden">
+              <h2 className="eyebrow border-b border-[var(--grid-line)] px-4 py-2.5">
+                Awaiting a status · {awaiting.length}
+              </h2>
               <ul className="divide-y divide-[var(--grid-line)]">
-                {(inMonth.length > 0 ? inMonth : upcoming).map((a) => (
+                {awaiting.slice(0, 5).map((a) => (
                   <li key={a.id}>
                     <Link
-                      href={`/activities/${a.id}`}
-                      className="group block px-4 py-3 transition-colors hover:bg-accent/50"
+                      href={selectHref(a.id)}
+                      scroll={false}
+                      className="block px-4 py-2.5 transition-colors hover:bg-accent"
                     >
-                      <div className="flex items-start gap-2">
-                        <span
-                          aria-hidden="true"
-                          className={`mt-1.5 size-2 shrink-0 rounded-full ${STATUS_DOT[a.status]}`}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium group-hover:text-primary">
+                      <span className="block text-sm font-semibold">
+                        {a.title}
+                      </span>
+                      <span className="mt-0.5 block text-[13px] text-muted-foreground">
+                        Ended {formatDate(a.endDate)} · still Planned
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {awaiting.length > 5 && (
+                <p className="border-t border-[var(--grid-line)] px-4 py-2 text-[13px] text-muted-foreground">
+                  and {awaiting.length - 5} more
+                </p>
+              )}
+            </section>
+          )}
+
+          <section className="surface overflow-hidden">
+            <h2 className="eyebrow border-b border-[var(--grid-line)] px-4 py-2.5">
+              Next 7 days
+            </h2>
+            {windowed.length === 0 ? (
+              <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">
+                Nothing scheduled this week.
+              </p>
+            ) : (
+              <ul className="divide-y divide-[var(--grid-line)]">
+                {windowed.map((a) => (
+                  <li key={a.id}>
+                    <Link
+                      href={selectHref(a.id)}
+                      scroll={false}
+                      className="flex gap-3 px-4 py-3 transition-colors hover:bg-accent"
+                    >
+                      <span className="w-[72px] shrink-0 pt-px font-mono text-xs text-[var(--body-muted)] tabular-nums">
+                        {a.startDate <= todayUTC && a.endDate >= todayUTC
+                          ? "Today"
+                          : formatDateRange(a.startDate, a.endDate)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-start gap-2">
+                          <span className="min-w-0 flex-1 text-sm font-semibold">
                             {a.title}
-                          </p>
-                          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground tabular-nums">
-                            {formatDateRange(a.startDate, a.endDate)}
-                          </p>
-                          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] text-muted-foreground">
-                            {a.venue && <span className="truncate">{a.venue.name}</span>}
-                            {a.leadDivision && (
-                              <>
-                                <span aria-hidden="true">·</span>
-                                <span>
-                                  {a.leadDivision.acronym ?? a.leadDivision.name}
-                                </span>
-                              </>
-                            )}
-                            <span className="ml-auto rounded border border-[var(--grid-line)] px-1 py-px font-medium">
-                              {TYPE_LABEL[a.type]}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
+                          </span>
+                          <span
+                            aria-hidden="true"
+                            className={`mt-1.5 size-1.5 shrink-0 rounded-full ${STATUS_DOT[a.status]}`}
+                          />
+                        </span>
+                        <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
+                          {[a.venue?.name, a.leadDivision?.acronym]
+                            .filter(Boolean)
+                            .join(" · ") || STATUS_LABEL[a.status]}
+                        </span>
+                      </span>
                     </Link>
                   </li>
                 ))}
@@ -353,36 +437,11 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
             )}
           </section>
 
-          <section className="surface px-4 py-3">
-            <h2 className="text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
-              Legend
-            </h2>
-            <ul className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-2">
-              {(
-                ["PLANNED", "CONDUCTED", "RESCHEDULED", "DROPPED"] as const
-              ).map((s) => (
-                <li key={s}>
-                  <StatusBadge status={s} />
-                </li>
-              ))}
-            </ul>
-            {/* The archive is manager-only, so a Viewer must not be sent to a
-                link that just bounces them back here. */}
-            <p className="mt-3 border-t border-[var(--grid-line)] pt-2.5 text-[11px] leading-relaxed text-muted-foreground">
-              {canManage ? (
-                <>
-                  Dropped activities leave the calendar but stay in the{" "}
-                  <Link href="/archive" className="underline underline-offset-2 hover:text-foreground">
-                    archive
-                  </Link>
-                  . A <span className="font-semibold">!</span> marks an activity
-                  booked over a conflict someone accepted.
-                </>
-              ) : (
-                <>Dropped activities no longer appear on the calendar.</>
-              )}
+          {!selected && (
+            <p className="px-1 text-[13px] text-muted-foreground">
+              Pick an activity on the grid to see its details here.
             </p>
-          </section>
+          )}
         </aside>
       </div>
     </div>

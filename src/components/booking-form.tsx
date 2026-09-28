@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 
+import { CollisionChecks } from "@/components/collision-checks";
 import { ConflictAlert } from "@/components/conflict-alert";
 import {
   ProgramCombobox,
@@ -177,39 +178,64 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
     });
   }
 
+  /** A step is flagged once its own check has found something unaccepted. */
+  const stepKind: Record<number, ConflictKind | undefined> = {
+    2: "DATE",
+    3: "VENUE",
+    4: "PARTICIPANT",
+  };
+
   return (
-    <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="grid gap-5 lg:grid-cols-[228px_minmax(0,1fr)] xl:grid-cols-[228px_minmax(0,1fr)_330px]">
       {/* Step rail */}
-      <ol className="surface h-fit divide-y divide-[var(--grid-line)] overflow-hidden lg:sticky lg:top-20">
+      <ol className="surface h-fit overflow-hidden p-1.5 lg:sticky lg:top-20">
         {STEPS.map((s) => {
           const done = s.n < step;
           const current = s.n === step;
+          const kind = stepKind[s.n];
+          const clash =
+            done && kind
+              ? conflicts.some((c) => c.kind === kind && c.hasConflict)
+              : false;
+          const accepted = clash && kind ? acknowledged.includes(kind) : false;
+
           return (
             <li key={s.n}>
               <button
                 type="button"
                 onClick={() => s.n <= step && setStep(s.n)}
                 disabled={s.n > step}
-                className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors ${
+                className={`flex w-full items-start gap-3 rounded-[10px] p-3 text-left text-sm transition-colors ${
                   current
-                    ? "bg-accent font-medium"
+                    ? "border border-input bg-card font-bold"
                     : done
-                      ? "hover:bg-accent/50"
-                      : "cursor-not-allowed opacity-45"
+                      ? "hover:bg-accent"
+                      : "cursor-not-allowed text-muted-foreground"
                 }`}
               >
                 <span
-                  className={`grid size-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold tabular-nums ${
-                    current
-                      ? "bg-primary text-primary-foreground"
-                      : done
-                        ? "bg-[var(--status-conducted)] text-white"
-                        : "bg-muted text-muted-foreground"
+                  className={`grid size-6.5 shrink-0 place-items-center rounded-full text-[13px] font-bold tabular-nums ${
+                    clash
+                      ? "bg-[var(--conflict)] text-white"
+                      : current
+                        ? "bg-primary text-primary-foreground"
+                        : done
+                          ? "bg-[var(--status-conducted-solid)] text-white"
+                          : "border-[1.5px] border-input"
                   }`}
                 >
-                  {done ? "✓" : s.n}
+                  {clash ? "!" : done ? "✓" : s.n}
                 </span>
-                {s.label}
+                <span className="flex min-w-0 flex-col gap-0.5 pt-0.5">
+                  <span className={current ? "font-bold" : "font-medium"}>
+                    {s.label}
+                  </span>
+                  {clash && (
+                    <span className="text-xs font-semibold text-[var(--conflict-text)]">
+                      {accepted ? "Overlap continued · recorded" : "Collision found"}
+                    </span>
+                  )}
+                </span>
               </button>
             </li>
           );
@@ -436,6 +462,17 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Below the form on narrow screens, beside it from xl up — the checks
+          are reference, not something to scroll past to reach the fields. */}
+      <div className="lg:col-span-2 xl:col-span-1">
+        <CollisionChecks
+          conflicts={conflicts}
+          acknowledged={acknowledged}
+          checking={checking}
+          step={step}
+        />
       </div>
     </div>
   );

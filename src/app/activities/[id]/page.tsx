@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AttachmentList } from "@/components/attachment-list";
 import { StatusActions } from "@/components/status-actions";
 import { StatusBadge } from "@/components/status-badge";
 import { NarrativeBlock, VarianceReadout } from "@/components/variance-readout";
@@ -23,6 +24,22 @@ const CONFLICT_KIND_LABEL = {
   DATE: "Date",
   VENUE: "Venue",
   PARTICIPANT: "Participant",
+} as const;
+
+/** Filled dot for the current status on the history thread. */
+const STATUS_TIMELINE = {
+  PLANNED: "bg-[var(--status-planned-solid)]",
+  CONDUCTED: "bg-[var(--status-conducted-solid)]",
+  RESCHEDULED: "bg-[var(--status-rescheduled-solid)]",
+  DROPPED: "bg-[var(--status-dropped-solid)]",
+} as const;
+
+/** Outlined dot for the states it has already passed through. */
+const STATUS_TIMELINE_RING = {
+  PLANNED: "border-[var(--status-planned-solid)]",
+  CONDUCTED: "border-[var(--status-conducted-solid)]",
+  RESCHEDULED: "border-[var(--status-rescheduled-solid)]",
+  DROPPED: "border-[var(--status-dropped-solid)]",
 } as const;
 
 function str(v: unknown): string {
@@ -108,7 +125,7 @@ export default async function ActivityPage({
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-5">
           <section className="surface overflow-hidden">
-            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 eyebrow">
               Details
             </h2>
             <dl className="grid gap-x-6 gap-y-3.5 p-4 sm:grid-cols-2">
@@ -126,7 +143,7 @@ export default async function ActivityPage({
           {/* Reporting figures are management data, not calendar data. */}
           {canManage && (
           <section>
-            <h2 className="mb-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+            <h2 className="mb-2.5 eyebrow">
               Target vs. accomplishment
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -152,7 +169,7 @@ export default async function ActivityPage({
 
           {activity.reschedules.length > 0 && (
             <section className="surface overflow-hidden">
-              <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 eyebrow">
                 Catch-up plan · {activity.reschedules.length}{" "}
                 {activity.reschedules.length === 1 ? "postponement" : "postponements"}
               </h2>
@@ -177,9 +194,11 @@ export default async function ActivityPage({
             </section>
           )}
 
+          {canManage && <AttachmentList items={activity.attachments} />}
+
           {activity.reasonForDropping && (
             <section className="surface p-4">
-              <h2 className="text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+              <h2 className="eyebrow">
                 Reason for dropping
               </h2>
               <p className="mt-1.5 text-sm">{activity.reasonForDropping}</p>
@@ -210,7 +229,7 @@ export default async function ActivityPage({
           )}
 
           <section className="surface overflow-hidden">
-            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 eyebrow">
               Participants · {activity.participants.length}
             </h2>
             {activity.participants.length === 0 ? (
@@ -240,20 +259,43 @@ export default async function ActivityPage({
 
           {canManage && (
           <section className="surface overflow-hidden">
-            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 eyebrow">
               History
             </h2>
-            <ol className="divide-y divide-[var(--grid-line)]">
-              {activity.statusHistory.map((h) => (
-                <li key={h.id} className="px-4 py-2.5 text-[13px]">
-                  <span className="font-medium">
-                    {h.fromStatus ? `${STATUS_LABEL[h.fromStatus]} → ` : ""}
-                    {STATUS_LABEL[h.toStatus]}
+            {/* A timeline rather than a list: these entries are one thing
+                that happened repeatedly, and the thread makes the order the
+                point instead of something to be reconstructed from dates. */}
+            <ol className="flex flex-col gap-4 p-4">
+              {activity.statusHistory.map((h, i) => (
+                <li key={h.id} className="relative grid grid-cols-[14px_minmax(0,1fr)] gap-x-3">
+                  {i < activity.statusHistory.length - 1 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-4 -bottom-5 left-1.5 w-px bg-[var(--grid-line)]"
+                    />
+                  )}
+                  {/* The newest entry is filled, earlier ones outlined — the
+                      current status is the one being asked about. */}
+                  <span
+                    aria-hidden="true"
+                    className={`relative mt-1 size-3 rounded-full ${
+                      i === 0
+                        ? STATUS_TIMELINE[h.toStatus]
+                        : `border-2 bg-card ${STATUS_TIMELINE_RING[h.toStatus]}`
+                    }`}
+                  />
+                  <span className="text-[13px]">
+                    <span className="block font-semibold">
+                      {h.fromStatus ? `${STATUS_LABEL[h.fromStatus]} → ` : ""}
+                      {STATUS_LABEL[h.toStatus]}
+                    </span>
+                    <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground tabular-nums">
+                      {formatDate(h.changedAt)}
+                    </span>
+                    {h.note && (
+                      <span className="mt-1 block text-muted-foreground">{h.note}</span>
+                    )}
                   </span>
-                  <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground tabular-nums">
-                    {formatDate(h.changedAt)}
-                  </span>
-                  {h.note && <span className="mt-1 block text-muted-foreground">{h.note}</span>}
                 </li>
               ))}
             </ol>

@@ -77,6 +77,12 @@ export function VarianceReadout({
         </span>
       </div>
 
+      <ProgressToTarget
+        target={Number(variance.target)}
+        accomplishment={Number(variance.accomplishment)}
+        outcome={variance.outcome}
+      />
+
       <dl className="mt-3 grid grid-cols-3 gap-3 text-sm">
         <div>
           <dt className="text-xs text-muted-foreground">Target</dt>
@@ -103,6 +109,59 @@ export function VarianceReadout({
         {variance.achievementRate !== null && (
           <> · {variance.achievementRate}% of target</>
         )}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Accomplishment drawn against target, with the target itself as a tick.
+ *
+ * The bar is scaled to whichever of the two is larger, so an overshoot has
+ * somewhere to go: scaling to target alone would cap every Gain at a full
+ * bar and make +1 look identical to +1000. The tick is what carries the
+ * comparison — the fill only says how far along it got.
+ */
+function ProgressToTarget({
+  target,
+  accomplishment,
+  outcome,
+}: {
+  target: number;
+  accomplishment: number;
+  outcome: "GAIN" | "GAP" | "MET";
+}) {
+  if (!Number.isFinite(target) || !Number.isFinite(accomplishment)) return null;
+  if (target <= 0) return null;
+
+  const ceiling = Math.max(target, accomplishment);
+  const fill = Math.min(100, (accomplishment / ceiling) * 100);
+  const tick = (target / ceiling) * 100;
+
+  const fillColour =
+    outcome === "GAIN"
+      ? "bg-[var(--gain-solid)]"
+      : outcome === "GAP"
+        ? "bg-[var(--gap-solid)]"
+        : "bg-[var(--met)]";
+
+  return (
+    <div className="mt-3">
+      <div className="relative h-3 rounded-full bg-[var(--subtle)]">
+        <div
+          className={`absolute inset-y-0 left-0 rounded-full ${fillColour}`}
+          style={{ width: `${fill}%` }}
+        />
+        {/* The target line sits above the fill so it stays readable when the
+            bar runs past it. */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-1 -bottom-1 w-0.5 bg-foreground"
+          style={{ left: `${tick}%` }}
+        />
+      </div>
+      <p className="mt-1.5 text-xs text-muted-foreground">
+        Target marked at {Math.round(tick)}% of the bar
       </p>
     </div>
   );
