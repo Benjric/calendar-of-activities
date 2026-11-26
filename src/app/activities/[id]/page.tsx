@@ -320,7 +320,7 @@ export default async function ActivityPage({
                     />
                     <span>
                       <strong>
-                        {h.fromStatus ? `${STATUS_LABEL[h.fromStatus]} → ` : "Booked · "}
+                        {h.fromStatus === h.toStatus ? "" : h.fromStatus ? `${STATUS_LABEL[h.fromStatus]} → ` : "Booked · "}
                         {STATUS_LABEL[h.toStatus]}
                       </strong>
                       <span className="block text-xs text-muted-foreground tabular-nums">

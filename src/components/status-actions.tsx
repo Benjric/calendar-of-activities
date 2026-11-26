@@ -48,6 +48,13 @@ export function StatusActions({ activityId, status, initial }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [conflicts, setConflicts] = useState<ConflictResult[]>([]);
   const [acknowledged, setAcknowledged] = useState<ConflictResult["kind"][]>([]);
+  /** A message from the server that belongs to no single field. */
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const conducted = status === "CONDUCTED";
+  const reported =
+    initial.physicalAccomplishment.trim() !== "" ||
+    initial.financialAccomplishment.trim() !== "";
 
   const [form, setForm] = useState(initial);
   const set = (k: keyof typeof initial, v: string) =>
@@ -63,17 +70,20 @@ export function StatusActions({ activityId, status, initial }: Props) {
 
   function handleConducted() {
     setErrors({});
+    setFormError(null);
     startTransition(async () => {
       const r = await recordConducted({ activityId, ...form });
       if (r.ok) {
         setMode(null);
         router.refresh();
       } else if (r.errors) setErrors(r.errors);
+      else if (r.message) setFormError(r.message);
     });
   }
 
   function handleReschedule() {
     setErrors({});
+    setFormError(null);
     startTransition(async () => {
       const r = await rescheduleActivity({
         activityId,
@@ -88,17 +98,20 @@ export function StatusActions({ activityId, status, initial }: Props) {
       } else if (r.conflicts?.length) {
         setConflicts(r.conflicts);
       } else if (r.errors) setErrors(r.errors);
+      else if (r.message) setFormError(r.message);
     });
   }
 
   function handleDrop() {
     setErrors({});
+    setFormError(null);
     startTransition(async () => {
       const r = await dropActivity({ activityId, reasonForDropping: dropReason });
       if (r.ok) {
         setMode(null);
         router.refresh();
       } else if (r.errors) setErrors(r.errors);
+      else if (r.message) setFormError(r.message);
     });
   }
 
@@ -130,11 +143,41 @@ export function StatusActions({ activityId, status, initial }: Props) {
   return (
     <div className="surface overflow-hidden">
       <h2 className="eyebrow border-b border-[var(--grid-line)] px-5 py-3 font-sans">
-        Update status
+        {conducted ? "Accomplishment report" : "Update status"}
       </h2>
 
       <div key={mode ?? "choose"} className="anim-swap px-5 py-4">
-        {mode === null && (
+        {formError && (
+          <p role="alert" className="anim-alert mb-3 rounded-[10px] border border-[var(--conflict-border)] bg-[var(--conflict-bg)] px-3.5 py-2.5 text-sm text-[var(--conflict-text)]">
+            {formError}
+          </p>
+        )}
+
+        {/* Conducted is final: it cannot be rescheduled or dropped, only
+            reported on — or corrected, if a figure was entered wrong. */}
+        {mode === null && conducted && (
+          <div className="flex flex-col gap-3">
+            <p className="flex items-start gap-2.5 text-sm text-[var(--body-muted)]">
+              <span aria-hidden="true" className="mt-px grid size-5 shrink-0 place-items-center rounded-full bg-[var(--status-conducted-solid)] text-white">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" className="size-3"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+              </span>
+              <span>
+                {reported
+                  ? "This activity was conducted and its accomplishment is on record. Correct the figures if one was entered wrong."
+                  : "This activity was conducted. Enter what was achieved against its targets to complete the report."}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={() => setMode("conducted")}
+              className={reported ? "btn-ghost self-start" : "btn-primary self-start"}
+            >
+              {reported ? "Edit accomplishment" : "Enter accomplishment"}
+            </button>
+          </div>
+        )}
+
+        {mode === null && !conducted && (
           <>
             <p className="text-[13px] text-muted-foreground">
               Each status opens the fields that status requires.

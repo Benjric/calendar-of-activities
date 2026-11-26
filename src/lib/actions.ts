@@ -265,12 +265,15 @@ async function recordConductedAuthorized(
       where: { id: input.activityId },
       select: { status: true },
     });
+    // Saving again on a Conducted activity corrects its report; it is not a
+    // second conduct, so the original date stays.
+    const wasConducted = before?.status === "CONDUCTED";
 
     await tx.activity.update({
       where: { id: input.activityId },
       data: {
         status: "CONDUCTED",
-        conductedAt: new Date(),
+        ...(wasConducted ? {} : { conductedAt: new Date() }),
         physicalTarget: input.physicalTarget,
         physicalAccomplishment: input.physicalAccomplishment,
         financialTarget: input.financialTarget,
@@ -301,6 +304,7 @@ async function recordConductedAuthorized(
         activityId: input.activityId,
         fromStatus: before?.status,
         toStatus: "CONDUCTED",
+        note: wasConducted ? "Accomplishment report updated" : undefined,
         changedById: userId,
       },
     });
@@ -339,6 +343,10 @@ async function rescheduleActivityAuthorized(
     },
   });
   if (!existing) return { ok: false, message: "Activity not found." };
+  // Conducted is final: it already happened, so there is nothing to move.
+  if (existing.status === "CONDUCTED") {
+    return { ok: false, message: "This activity has already been conducted and cannot be rescheduled." };
+  }
 
   // The new schedule is re-run through the same checks the booking used.
   const conflicts = await runAllConflictChecks({
@@ -418,6 +426,15 @@ async function dropActivityAuthorized(
   if (!parsed.success) return { ok: false, errors: fieldErrors(parsed.error) };
 
   const input = parsed.data;
+
+  // Conducted is final: an activity that happened cannot be dropped.
+  const current = await prisma.activity.findUnique({
+    where: { id: input.activityId },
+    select: { status: true },
+  });
+  if (current?.status === "CONDUCTED") {
+    return { ok: false, message: "This activity has already been conducted and cannot be dropped." };
+  }
 
   await prisma.$transaction(async (tx) => {
     const before = await tx.activity.findUnique({
