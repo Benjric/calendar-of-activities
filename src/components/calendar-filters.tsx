@@ -1,30 +1,33 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useOptimistic, useTransition, type CSSProperties } from "react";
 
-import { MARK } from "@/components/status-badge";
 import { STATUS_LABEL } from "@/lib/format";
 
 const FILTERABLE = ["PLANNED", "CONDUCTED", "RESCHEDULED"] as const;
 type Filterable = (typeof FILTERABLE)[number];
 
-/* Each chip wears its status's tint while switched on, so the row doubles as
-   the legend for the grid below it. */
-const CHIP_ON: Record<Filterable, string> = {
-  PLANNED:
-    "border-[var(--status-planned-border)] bg-[var(--status-planned-bg)] text-[var(--status-planned)]",
-  CONDUCTED:
-    "border-[var(--status-conducted-border)] bg-[var(--status-conducted-bg)] text-[var(--status-conducted)]",
-  RESCHEDULED:
-    "border-dashed border-[var(--status-rescheduled-border)] bg-[var(--status-rescheduled-bg)] text-[var(--status-rescheduled)]",
-};
-
-const CHIP_OFF: Record<Filterable, string> = {
-  PLANNED: "border-[var(--status-planned-border)] text-[var(--status-planned)]",
-  CONDUCTED: "border-[var(--status-conducted-border)] text-[var(--status-conducted)]",
-  RESCHEDULED:
-    "border-dashed border-[var(--status-rescheduled-border)] text-[var(--status-rescheduled)]",
+/* Each chip's colours, handed to the `.status-chip` rules in globals.css. */
+const CHIP_VARS: Record<Filterable, CSSProperties> = {
+  PLANNED: {
+    "--chip-fg": "var(--status-planned)",
+    "--chip-bg": "var(--status-planned-bg)",
+    "--chip-bd": "var(--status-planned-border)",
+    "--chip-solid": "var(--status-planned-solid)",
+  } as CSSProperties,
+  CONDUCTED: {
+    "--chip-fg": "var(--status-conducted)",
+    "--chip-bg": "var(--status-conducted-bg)",
+    "--chip-bd": "var(--status-conducted-border)",
+    "--chip-solid": "var(--status-conducted-solid)",
+  } as CSSProperties,
+  RESCHEDULED: {
+    "--chip-fg": "var(--status-rescheduled)",
+    "--chip-bg": "var(--status-rescheduled-bg)",
+    "--chip-bd": "var(--status-rescheduled-border)",
+    "--chip-solid": "var(--status-rescheduled-solid)",
+  } as CSSProperties,
 };
 
 /**
@@ -32,7 +35,8 @@ const CHIP_OFF: Record<Filterable, string> = {
  *
  * Every control writes to the URL rather than to local state, so a filtered
  * month is a link somebody can send to whoever needs to look at it, and the
- * grid behind it stays a Server Component.
+ * grid behind it stays a Server Component. The chips flip optimistically, so
+ * they answer the click at once while the grid catches up.
  */
 export function CalendarFilters({
   counts,
@@ -48,10 +52,12 @@ export function CalendarFilters({
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const off = new Set(hidden);
+  const [pending, startTransition] = useTransition();
+  const [shownHidden, setShownHidden] = useOptimistic(hidden);
+  const off = new Set(shownHidden);
 
   /** Flips one status and drops `sel`, which may point at a hidden bar. */
-  function toggleHref(status: Filterable) {
+  function toggle(status: Filterable) {
     const next = new Set(off);
     if (next.has(status)) next.delete(status);
     else next.add(status);
@@ -61,7 +67,11 @@ export function CalendarFilters({
     else q.delete("hide");
     q.delete("sel");
     const s = q.toString();
-    return s ? `${pathname}?${s}` : pathname;
+
+    startTransition(() => {
+      setShownHidden([...next]);
+      router.push(s ? `${pathname}?${s}` : pathname, { scroll: false });
+    });
   }
 
   function onDivision(value: string) {
@@ -75,24 +85,40 @@ export function CalendarFilters({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div role="group" aria-label="Show statuses" className="flex flex-wrap gap-2">
+      <div
+        role="group"
+        aria-label="Show statuses"
+        aria-busy={pending}
+        className="flex flex-wrap items-center gap-2"
+      >
         {FILTERABLE.map((s) => {
           const on = !off.has(s);
           return (
-            <Link
+            <button
               key={s}
-              href={toggleHref(s)}
-              scroll={false}
+              type="button"
               role="switch"
               aria-checked={on}
-              className={`press inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 text-sm font-semibold transition-[background-color,opacity] duration-200 ${
-                on ? CHIP_ON[s] : `bg-card opacity-60 line-through ${CHIP_OFF[s]}`
-              }`}
+              data-dashed={s === "RESCHEDULED"}
+              onClick={() => toggle(s)}
+              className="status-chip"
+              style={CHIP_VARS[s]}
             >
-              <span aria-hidden="true" className="font-bold">{MARK[s]}</span>
+              {/* Keyed by state, so switching on replays the pop and the tick. */}
+              <span
+                key={on ? "on" : "off"}
+                aria-hidden="true"
+                className={`chip-check ${on ? "anim-spring" : ""}`}
+              >
+                {on && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" className="size-3">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                  </svg>
+                )}
+              </span>
               {STATUS_LABEL[s]}
-              <span className="font-bold tabular-nums">{counts[s]}</span>
-            </Link>
+              <span className="chip-count">{counts[s]}</span>
+            </button>
           );
         })}
       </div>
@@ -105,7 +131,7 @@ export function CalendarFilters({
           id="div-filter"
           value={divisionId}
           onChange={(e) => onDivision(e.currentTarget.value)}
-          className="field-input w-auto min-w-[200px]"
+          className="field-input w-auto min-w-[200px] cursor-pointer"
         >
           <option value="">All divisions</option>
           {divisions.map((d) => (

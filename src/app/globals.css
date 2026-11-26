@@ -477,6 +477,106 @@
       box-shadow 0.2s ease;
   }
 
+  /* ---------- Status filter chips ----------
+     Each chip sets --chip-fg/-bg/-bd/-solid inline for its own status. Off is
+     a plain white pill with an empty ring in the status colour; on fills with
+     the status tint and the ring becomes a check. Hover previews the tint and
+     lifts the chip, so it is obvious it can be pressed. */
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 6px 0 9px;
+    border-radius: 999px;
+    border: 1px solid var(--input);
+    background: var(--card);
+    color: var(--muted-foreground);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.25s ease,
+      transform 0.2s var(--ease-out);
+  }
+  .status-chip[data-dashed="true"] {
+    border-style: dashed;
+  }
+  .status-chip:hover {
+    transform: translateY(-2px);
+    color: var(--chip-fg);
+    border-color: var(--chip-bd);
+    background: color-mix(in oklch, var(--chip-bg) 50%, var(--card));
+    box-shadow: 0 8px 18px -10px color-mix(in oklch, var(--chip-solid) 70%, transparent);
+  }
+  .status-chip:active {
+    transform: translateY(0) scale(0.96);
+    transition-duration: 0.08s;
+  }
+  .status-chip[aria-checked="true"] {
+    color: var(--chip-fg);
+    border-color: var(--chip-bd);
+    background: var(--chip-bg);
+  }
+  .status-chip[aria-checked="true"]:hover {
+    border-color: var(--chip-solid);
+    background: var(--chip-bg);
+  }
+
+  .chip-check {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    border: 1.5px solid var(--chip-solid);
+    color: #fff;
+    transition: transform 0.3s var(--ease-spring);
+  }
+  .status-chip[aria-checked="true"] .chip-check {
+    background: var(--chip-solid);
+  }
+  .status-chip:hover .chip-check {
+    transform: scale(1.12);
+  }
+  /* The tick draws itself each time the chip is switched on. */
+  .chip-check path {
+    stroke-dasharray: 16;
+    stroke-dashoffset: 0;
+    animation: coa-tick 0.35s var(--ease-out) 0.05s both;
+  }
+
+  .chip-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: var(--subtle);
+    color: var(--muted-foreground);
+    font-size: 12.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.25s var(--ease-spring);
+  }
+  .status-chip[aria-checked="true"] .chip-count {
+    background: var(--card);
+    color: var(--chip-fg);
+  }
+  .status-chip:hover .chip-count {
+    transform: translateX(1px) scale(1.06);
+  }
+
   /* ---------- Hover affordances ---------- */
 
   /* A card that rises a little under the pointer. */
@@ -737,6 +837,14 @@
   }
   100% {
     box-shadow: 0 0 0 0 transparent;
+  }
+}
+@keyframes coa-tick {
+  from {
+    stroke-dashoffset: 16;
+  }
+  to {
+    stroke-dashoffset: 0;
   }
 }
 @keyframes coa-spin {
