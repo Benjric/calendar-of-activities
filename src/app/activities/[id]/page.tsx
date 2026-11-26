@@ -26,20 +26,12 @@ const CONFLICT_KIND_LABEL = {
   PARTICIPANT: "Participant",
 } as const;
 
-/** Filled dot for the current status on the history thread. */
-const STATUS_TIMELINE = {
+/** Filled dot for each step on the history thread. */
+const STATUS_DOT = {
   PLANNED: "bg-[var(--status-planned-solid)]",
   CONDUCTED: "bg-[var(--status-conducted-solid)]",
   RESCHEDULED: "bg-[var(--status-rescheduled-solid)]",
   DROPPED: "bg-[var(--status-dropped-solid)]",
-} as const;
-
-/** Outlined dot for the states it has already passed through. */
-const STATUS_TIMELINE_RING = {
-  PLANNED: "border-[var(--status-planned-solid)]",
-  CONDUCTED: "border-[var(--status-conducted-solid)]",
-  RESCHEDULED: "border-[var(--status-rescheduled-solid)]",
-  DROPPED: "border-[var(--status-dropped-solid)]",
 } as const;
 
 function str(v: unknown): string {
@@ -61,59 +53,84 @@ export default async function ActivityPage({
   const variance = computeActivityVariance(activity);
   const days = dayCount(activity.startDate, activity.endDate);
 
+  const fund = activity.hasFinancialReq
+    ? activity.sourceOfFund === "OTHER"
+      ? activity.sourceOfFundOther ?? "Other"
+      : activity.sourceOfFund
+        ? FUND_LABEL[activity.sourceOfFund]
+        : "—"
+    : "No financial requirement";
+
   const facts = [
-    { label: "Dates", value: formatDateRange(activity.startDate, activity.endDate), mono: true },
-    { label: "Duration", value: `${days} ${days === 1 ? "day" : "days"}`, mono: true },
+    { label: "Dates", value: `${formatDateRange(activity.startDate, activity.endDate)} · ${days} ${days === 1 ? "day" : "days"}` },
     { label: "Venue", value: activity.venue?.name ?? "—" },
-    { label: "Lead division", value: activity.leadDivision?.name ?? "—" },
-    { label: "Focal person", value: activity.focalPerson?.fullName ?? "—" },
-    { label: "Program", value: activity.program?.name ?? "—" },
     { label: "Type", value: TYPE_LABEL[activity.type] },
-    { label: "Performance indicator", value: activity.performanceIndicator ?? "—" },
-    {
-      label: "Source of fund",
-      value: activity.hasFinancialReq
-        ? activity.sourceOfFund === "OTHER"
-          ? activity.sourceOfFundOther ?? "Other"
-          : activity.sourceOfFund
-            ? FUND_LABEL[activity.sourceOfFund]
-            : "—"
-        : "No financial requirement",
-    },
+    { label: "Lead Division", value: activity.leadDivision?.name ?? "—" },
+    { label: "Focal Person", value: activity.focalPerson?.fullName ?? "—" },
+    { label: "Program", value: activity.program?.name ?? "—" },
+    { label: "Performance Indicator", value: activity.performanceIndicator ?? "—" },
+    { label: "Source of Fund", value: fund },
   ];
 
+  const details = (
+    <section className="surface flex flex-col gap-3 px-5 py-[18px]">
+      <h2 className="eyebrow font-sans">Activity details</h2>
+      <dl className="m-0 grid grid-cols-[130px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+        {facts.map((f) => (
+          <div key={f.label} className="contents">
+            <dt className="text-muted-foreground">{f.label}</dt>
+            <dd className="m-0 font-semibold tabular-nums">{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+
   return (
-    <div className="space-y-5">
-      <div>
-        <Link href="/calendar" className="inline-flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-3.5"><path d="m15 18-6-6 6-6" /></svg>
-          Calendar
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-5">
+      <div className="anim-up flex flex-col gap-2">
+        <Link
+          href="/calendar"
+          className="self-start text-sm font-semibold text-primary hover:text-[var(--primary-hover)]"
+        >
+          ← Back to calendar
         </Link>
-        <div className="mt-1.5 flex flex-wrap items-center gap-3">
-          <h1 className="text-[26px] leading-tight font-semibold tracking-tight">
-            {activity.title}
-          </h1>
+        <div className="flex flex-wrap items-center gap-2.5">
           <StatusBadge status={activity.status} />
+          {activity.archivedAt && (
+            <span className="text-sm text-muted-foreground">
+              Archived {formatDate(activity.archivedAt)}
+            </span>
+          )}
         </div>
-        <p className="mt-1.5 font-mono text-sm text-muted-foreground tabular-nums">
-          {formatDateRange(activity.startDate, activity.endDate)}
-          {activity.venue && ` · ${activity.venue.name}`}
-        </p>
+        <h1 className="text-[28px] leading-tight sm:text-[32px]">{activity.title}</h1>
+        <span className="text-base text-[var(--body-muted)] tabular-nums">
+          {[
+            formatDateRange(activity.startDate, activity.endDate),
+            activity.venue?.name,
+            activity.leadDivision?.acronym ?? activity.leadDivision?.name,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </span>
       </div>
 
       {canManage && activity.conflictOverrides.length > 0 && (
-        <div className="rounded-lg border border-[var(--conflict)]/35 bg-[var(--conflict-bg)] p-4">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--conflict)]">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true" className="size-4"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
+        <div
+          className="anim-pop rounded-2xl border border-[var(--conflict-border)] bg-[var(--conflict-bg)] px-5 py-4"
+          style={{ animationDelay: "0.05s" }}
+        >
+          <h2 className="flex items-center gap-2 font-sans text-base font-bold text-[var(--conflict-text)]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-5"><path d="M12 3l10 18H2z" /><path d="M12 10v4M12 17.5v.01" /></svg>
             Booked over {activity.conflictOverrides.length}{" "}
             {activity.conflictOverrides.length === 1 ? "conflict" : "conflicts"}
           </h2>
-          <ul className="mt-2.5 space-y-2">
+          <ul className="mt-3 flex flex-col gap-2">
             {activity.conflictOverrides.map((o) => (
-              <li key={o.id} className="rounded-md border border-[var(--conflict)]/20 bg-card/70 px-3 py-2 text-[13px]">
-                <span className="font-medium">{CONFLICT_KIND_LABEL[o.kind]} conflict</span>
-                <span className="mt-0.5 block text-muted-foreground">{o.details}</span>
-                <span className="mt-1 block font-mono text-[11px] text-muted-foreground tabular-nums">
+              <li key={o.id} className="rounded-xl border border-[var(--conflict-border)] bg-card/80 px-3.5 py-2.5 text-sm">
+                <span className="font-semibold">{CONFLICT_KIND_LABEL[o.kind]} conflict</span>
+                <span className="mt-0.5 block text-[var(--body-muted)]">{o.details}</span>
+                <span className="mt-1 block text-xs text-muted-foreground tabular-nums">
                   Accepted {formatDate(o.overriddenAt)}
                 </span>
               </li>
@@ -122,132 +139,141 @@ export default async function ActivityPage({
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-5">
-          <section className="surface overflow-hidden">
-            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 eyebrow">
-              Details
-            </h2>
-            <dl className="grid gap-x-6 gap-y-3.5 p-4 sm:grid-cols-2">
-              {facts.map((f) => (
-                <div key={f.label}>
-                  <dt className="text-[11px] text-muted-foreground">{f.label}</dt>
-                  <dd className={`mt-0.5 text-sm ${f.mono ? "font-mono tabular-nums" : ""}`}>
-                    {f.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-
+      <div className="flex flex-wrap items-start gap-5">
+        <div className="flex min-w-0 flex-[999_1_600px] flex-col gap-4">
           {/* Reporting figures are management data, not calendar data. */}
-          {canManage && (
-          <section>
-            <h2 className="mb-2.5 eyebrow">
-              Target vs. accomplishment
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <VarianceReadout label="Physical" variance={variance.physical} />
+          {canManage ? (
+            <>
+              <VarianceReadout
+                label="Physical"
+                subtitle={activity.performanceIndicator ?? "Physical target"}
+                variance={variance.physical}
+                delay={0.05}
+              >
                 <NarrativeBlock
                   variance={variance.physical}
                   notablePractice={activity.physicalNotablePractice}
                   justification={activity.physicalJustification}
                 />
-              </div>
-              <div>
-                <VarianceReadout label="Financial" variance={variance.financial} money />
+              </VarianceReadout>
+              <VarianceReadout
+                label="Financial"
+                subtitle={activity.hasFinancialReq ? `Source of Fund · ${fund}` : "No financial requirement"}
+                variance={variance.financial}
+                money
+                delay={0.1}
+              >
                 <NarrativeBlock
                   variance={variance.financial}
                   notablePractice={activity.financialNotablePractice}
                   justification={activity.financialJustification}
                 />
-              </div>
+              </VarianceReadout>
+            </>
+          ) : (
+            <div className="anim-up" style={{ animationDelay: "0.05s" }}>
+              {details}
             </div>
-          </section>
           )}
 
           {activity.reschedules.length > 0 && (
-            <section className="surface overflow-hidden">
-              <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 eyebrow">
-                Catch-up plan · {activity.reschedules.length}{" "}
+            <section
+              className="surface anim-up overflow-hidden"
+              style={{ animationDelay: "0.15s" }}
+            >
+              <h2 className="border-b border-[var(--grid-line)] px-6 py-4 text-[19px]">
+                Catch-up Plan · {activity.reschedules.length}{" "}
                 {activity.reschedules.length === 1 ? "postponement" : "postponements"}
               </h2>
               <ul className="divide-y divide-[var(--grid-line)]">
                 {activity.reschedules.map((r) => (
-                  <li key={r.id} className="px-4 py-3">
-                    <p className="font-mono text-[13px] tabular-nums">
-                      <span className="text-muted-foreground line-through">
+                  <li key={r.id} className="flex flex-col gap-1 px-6 py-3.5">
+                    <p className="flex flex-wrap items-center gap-2.5 text-[15px] tabular-nums">
+                      <span className="text-[var(--faint-foreground)] line-through">
                         {formatDateRange(r.previousStartDate, r.previousEndDate)}
                       </span>
-                      <span aria-hidden="true" className="mx-2 text-muted-foreground">→</span>
-                      <span className="font-medium">
-                        {formatDateRange(r.proposedStartDate, r.proposedEndDate)}
-                      </span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="var(--status-rescheduled-solid)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-4"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                      <strong>{formatDateRange(r.proposedStartDate, r.proposedEndDate)}</strong>
                     </p>
-                    <p className="mt-1 text-[13px] text-muted-foreground">
-                      {r.reasonForPostponement}
-                    </p>
+                    <p className="text-sm text-[var(--body-muted)]">“{r.reasonForPostponement}”</p>
                   </li>
                 ))}
               </ul>
             </section>
           )}
 
-          {canManage && <AttachmentList items={activity.attachments} />}
+          {canManage && (
+            <div className="anim-up" style={{ animationDelay: "0.2s" }}>
+              <AttachmentList items={activity.attachments} />
+            </div>
+          )}
 
           {activity.reasonForDropping && (
-            <section className="surface p-4">
-              <h2 className="eyebrow">
-                Reason for dropping
-              </h2>
-              <p className="mt-1.5 text-sm">{activity.reasonForDropping}</p>
+            <section
+              className="anim-up rounded-2xl bg-[var(--status-dropped-wash)] px-5 py-4"
+              style={{ animationDelay: "0.2s" }}
+            >
+              <h2 className="eyebrow font-sans">Reason for dropping</h2>
+              <p className="mt-1.5 text-[15px]">{activity.reasonForDropping}</p>
             </section>
           )}
         </div>
 
-        <aside className="space-y-4">
+        <aside
+          className="anim-up flex min-w-0 flex-[1_1_300px] flex-col gap-3.5"
+          style={{ animationDelay: "0.1s" }}
+        >
           {/* Hiding this is presentation only — the Server Actions behind it
               refuse a Viewer regardless of what the page renders. */}
           {canManage && (
-          <StatusActions
-            activityId={activity.id}
-            status={activity.status}
-            initial={{
-              physicalTarget: str(activity.physicalTarget),
-              physicalAccomplishment: str(activity.physicalAccomplishment),
-              financialTarget: str(activity.financialTarget),
-              financialAccomplishment: str(activity.financialAccomplishment),
-              physicalNotablePractice: activity.physicalNotablePractice ?? "",
-              physicalJustification: activity.physicalJustification ?? "",
-              financialNotablePractice: activity.financialNotablePractice ?? "",
-              financialJustification: activity.financialJustification ?? "",
-              startDate: toDateInput(activity.startDate),
-              endDate: toDateInput(activity.endDate),
-            }}
-          />
+            <div id="status-actions" className="scroll-mt-24">
+              <StatusActions
+                activityId={activity.id}
+                status={activity.status}
+                initial={{
+                  physicalTarget: str(activity.physicalTarget),
+                  physicalAccomplishment: str(activity.physicalAccomplishment),
+                  financialTarget: str(activity.financialTarget),
+                  financialAccomplishment: str(activity.financialAccomplishment),
+                  physicalNotablePractice: activity.physicalNotablePractice ?? "",
+                  physicalJustification: activity.physicalJustification ?? "",
+                  financialNotablePractice: activity.financialNotablePractice ?? "",
+                  financialJustification: activity.financialJustification ?? "",
+                  startDate: toDateInput(activity.startDate),
+                  endDate: toDateInput(activity.endDate),
+                }}
+              />
+            </div>
           )}
 
+          {canManage && details}
+
           <section className="surface overflow-hidden">
-            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 eyebrow">
+            <h2 className="eyebrow border-b border-[var(--grid-line)] px-5 py-3 font-sans">
               Participants · {activity.participants.length}
             </h2>
             {activity.participants.length === 0 ? (
-              <p className="px-4 py-5 text-center text-[13px] text-muted-foreground">
+              <p className="px-5 py-5 text-center text-sm text-muted-foreground">
                 None recorded.
               </p>
             ) : (
               <ul className="divide-y divide-[var(--grid-line)]">
                 {activity.participants.map((p) => (
-                  <li key={p.id} className="flex items-center gap-2 px-4 py-2.5">
+                  <li key={p.id} className="flex items-center gap-2.5 px-5 py-2.5">
+                    <span
+                      aria-hidden="true"
+                      className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--avatar-bg)] text-xs font-bold text-[var(--avatar-foreground)]"
+                    >
+                      {p.person.fullName.charAt(0)}
+                    </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{p.person.fullName}</span>
+                      <span className="block truncate text-sm font-semibold">{p.person.fullName}</span>
                       {p.person.position && (
-                        <span className="block truncate text-[11px] text-muted-foreground">{p.person.position}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{p.person.position}</span>
                       )}
                     </span>
                     {p.person.division?.acronym && (
-                      <span className="shrink-0 rounded border border-[var(--grid-line)] px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      <span className="shrink-0 rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
                         {p.person.division.acronym}
                       </span>
                     )}
@@ -258,48 +284,43 @@ export default async function ActivityPage({
           </section>
 
           {canManage && (
-          <section className="surface overflow-hidden">
-            <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 eyebrow">
-              History
-            </h2>
-            {/* A timeline rather than a list: these entries are one thing
-                that happened repeatedly, and the thread makes the order the
-                point instead of something to be reconstructed from dates. */}
-            <ol className="flex flex-col gap-4 p-4">
-              {activity.statusHistory.map((h, i) => (
-                <li key={h.id} className="relative grid grid-cols-[14px_minmax(0,1fr)] gap-x-3">
-                  {i < activity.statusHistory.length - 1 && (
+            <section className="surface flex flex-col gap-3 px-5 py-[18px]">
+              <h2 className="eyebrow font-sans">History</h2>
+              {/* A thread rather than a list: these entries are one thing that
+                  happened repeatedly, and the order is the point. */}
+              <ol className="flex flex-col gap-3 text-sm">
+                {activity.statusHistory.map((h, i) => (
+                  <li
+                    key={h.id}
+                    className="anim-up relative flex gap-2.5"
+                    style={{ animationDelay: `${(0.2 + i * 0.06).toFixed(2)}s` }}
+                  >
+                    {i < activity.statusHistory.length - 1 && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute top-4 -bottom-4 left-[4.5px] w-px bg-[var(--grid-line)]"
+                      />
+                    )}
                     <span
                       aria-hidden="true"
-                      className="absolute top-4 -bottom-5 left-1.5 w-px bg-[var(--grid-line)]"
+                      className={`relative mt-[5px] size-2.5 shrink-0 rounded-full ${STATUS_DOT[h.toStatus]}`}
                     />
-                  )}
-                  {/* The newest entry is filled, earlier ones outlined — the
-                      current status is the one being asked about. */}
-                  <span
-                    aria-hidden="true"
-                    className={`relative mt-1 size-3 rounded-full ${
-                      i === 0
-                        ? STATUS_TIMELINE[h.toStatus]
-                        : `border-2 bg-card ${STATUS_TIMELINE_RING[h.toStatus]}`
-                    }`}
-                  />
-                  <span className="text-[13px]">
-                    <span className="block font-semibold">
-                      {h.fromStatus ? `${STATUS_LABEL[h.fromStatus]} → ` : ""}
-                      {STATUS_LABEL[h.toStatus]}
+                    <span>
+                      <strong>
+                        {h.fromStatus ? `${STATUS_LABEL[h.fromStatus]} → ` : "Booked · "}
+                        {STATUS_LABEL[h.toStatus]}
+                      </strong>
+                      <span className="block text-xs text-muted-foreground tabular-nums">
+                        {formatDate(h.changedAt)}
+                      </span>
+                      {h.note && (
+                        <span className="mt-0.5 block text-[var(--body-muted)]">{h.note}</span>
+                      )}
                     </span>
-                    <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground tabular-nums">
-                      {formatDate(h.changedAt)}
-                    </span>
-                    {h.note && (
-                      <span className="mt-1 block text-muted-foreground">{h.note}</span>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
+                  </li>
+                ))}
+              </ol>
+            </section>
           )}
         </aside>
       </div>

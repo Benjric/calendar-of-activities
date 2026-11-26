@@ -60,7 +60,7 @@ const ROLE_STYLE: Record<Role, string> = {
 };
 
 const inputCls =
-  "w-full rounded-lg border border-[var(--grid-line)] bg-card px-3 py-2 text-sm transition-[border-color] focus:border-primary/50 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1";
+  "field-input";
 
 function errorCls(hasError: boolean) {
   return hasError ? `${inputCls} border-[var(--conflict)]` : inputCls;
@@ -233,7 +233,7 @@ export function AccountManager({ accounts, lookups, currentUserId }: Props) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[26px] leading-none font-semibold tracking-tight">
+          <h1 className="anim-up text-[32px] leading-tight sm:text-[36px]">
             Accounts
           </h1>
           <p className="mt-2 max-w-prose text-sm text-muted-foreground">

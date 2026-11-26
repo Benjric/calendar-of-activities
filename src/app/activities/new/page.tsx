@@ -11,22 +11,19 @@ export default async function NewActivityPage() {
   const lookups = await getLookups();
 
   return (
-    <div className="space-y-5">
-      <div>
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-5">
+      <div className="anim-up flex flex-col gap-1.5">
         <Link
           href="/calendar"
-          className="inline-flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+          className="self-start text-sm font-semibold text-primary hover:text-[var(--primary-hover)]"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-3.5"><path d="m15 18-6-6 6-6" /></svg>
-          Calendar
+          ← Back to calendar
         </Link>
-        <h1 className="mt-1.5 text-[26px] leading-none font-semibold tracking-tight">
-          Book an Activity
-        </h1>
-        <p className="mt-2 max-w-[70ch] text-sm text-muted-foreground">
+        <h1 className="text-[32px] leading-tight">Book an activity</h1>
+        <p className="max-w-[70ch] text-[15px] text-muted-foreground">
           The date, venue and participant checks run against the live calendar as
-          you fill this in. Each one can be accepted and continued past — doing
-          so is recorded against the activity.
+          you fill this in. Each one can be continued past — doing so is
+          recorded against the activity.
         </p>
       </div>
 

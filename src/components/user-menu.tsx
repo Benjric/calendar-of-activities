@@ -19,8 +19,15 @@ export function UserMenu({
     function onDocClick(e: MouseEvent) {
       if (!ref.current?.contains(e.target as Node)) setOpen(false);
     }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
     document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   const initials = name
@@ -38,31 +45,21 @@ export function UserMenu({
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-accent"
+        aria-label={`Account menu for ${name}`}
+        className="press grid size-11 place-items-center rounded-full border border-border bg-[var(--avatar-bg)] text-sm font-bold text-[var(--avatar-foreground)] transition-[box-shadow,transform] hover:shadow-[0_0_0_3px_var(--avatar-bg)]"
       >
-        <span
-          aria-hidden="true"
-          className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-semibold"
-        >
-          {initials || "?"}
-        </span>
-        <span className="hidden text-left leading-tight sm:block">
-          <span className="block text-[13px] font-medium">{name}</span>
-          <span className="block text-[11px] text-muted-foreground">
-            {roleLabel}
-          </span>
-        </span>
+        {initials || "?"}
       </button>
 
       {open && (
         <div
           role="menu"
-          className="surface-raised absolute right-0 z-40 mt-1.5 w-56 p-1"
+          className="surface-raised anim-open absolute right-0 z-40 mt-2 w-60 origin-top-right p-1.5"
         >
-          <div className="border-b border-[var(--grid-line)] px-3 py-2">
-            <p className="truncate text-sm font-medium">{name}</p>
-            <p className="truncate text-[11px] text-muted-foreground">{email}</p>
-            <p className="mt-1 inline-block rounded border border-[var(--grid-line)] px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <div className="border-b border-[var(--grid-line)] px-3 py-2.5">
+            <p className="truncate text-sm font-semibold">{name}</p>
+            <p className="truncate text-xs text-muted-foreground">{email}</p>
+            <p className="mt-1.5 inline-block rounded-md border border-border bg-[var(--subtle)] px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
               {roleLabel}
             </p>
           </div>
@@ -70,7 +67,7 @@ export function UserMenu({
             type="button"
             role="menuitem"
             onClick={() => signOut({ callbackUrl: "/sign-in" })}
-            className="mt-1 w-full rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+            className="mt-1 w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-accent"
           >
             Sign out
           </button>

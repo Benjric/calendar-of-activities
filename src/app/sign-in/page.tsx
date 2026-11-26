@@ -6,20 +6,22 @@ import { getCurrentUser } from "@/lib/authz";
 
 export const dynamic = "force-dynamic";
 
-const POINTS = [
-  {
-    title: "Three checks before the save",
-    body: "Date, venue and participants, run against the live calendar as you book.",
-  },
-  {
-    title: "Target against accomplishment",
-    body: "Physical and financial variance computed separately on the same record.",
-  },
-  {
-    title: "Nothing quietly disappears",
-    body: "Every postponement keeps its reason. Dropped activities stay in the archive.",
-  },
-];
+/* The illustrative week on the brand panel. Purely decorative: example bars,
+   not anyone's real activities. */
+const DEMO_BARS = [
+  { col: "2 / span 3", row: 1, label: "○ Training on Data Management", tone: "planned", warn: true, delay: 0.4 },
+  { col: "3", row: 2, label: "Venue clash", tone: "conflict", shake: true, delay: 0.55 },
+  { col: "5", row: 1, label: "○ Coaching", tone: "planned", delay: 0.7 },
+  { col: "1 / span 2", row: 3, label: "● Conducted", tone: "conducted", delay: 0.85 },
+  { col: "4 / span 2", row: 3, label: "→ Rescheduled", tone: "rescheduled", delay: 1 },
+] as const;
+
+const TONE = {
+  planned: "border-[var(--status-planned-border)] bg-[var(--status-planned-bg)] text-[var(--status-planned)]",
+  conducted: "border-[var(--status-conducted-border)] bg-[var(--status-conducted-bg)] text-[var(--status-conducted)]",
+  rescheduled: "border-dashed border-[var(--status-rescheduled-border)] bg-[var(--status-rescheduled-bg)] text-[var(--status-rescheduled)]",
+  conflict: "border-[var(--conflict-border)] bg-[var(--conflict-bg)] text-[var(--conflict-text)]",
+} as const;
 
 export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   const user = await getCurrentUser();
@@ -30,88 +32,83 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
     typeof params.callbackUrl === "string" ? params.callbackUrl : "/calendar";
 
   return (
-    <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)]">
+    <div className="flex min-h-screen flex-1 flex-wrap bg-card">
       {/* Brand panel */}
-      <section className="relative hidden overflow-hidden bg-primary px-10 py-12 text-white lg:flex lg:flex-col">
-        {/* A faint calendar grid, echoing the product itself. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
-            backgroundSize: "88px 72px",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-32 -right-32 size-96 rounded-full bg-white/5 blur-3xl"
-        />
-
-        <Link href="/" className="relative flex items-center gap-2.5">
-          <span
-            aria-hidden="true"
-            className="grid size-9 shrink-0 place-items-center rounded-lg bg-white/15 backdrop-blur-sm"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-4.5">
+      <section
+        aria-hidden="true"
+        className="hidden min-w-0 flex-[1_1_560px] flex-col gap-10 border-r border-[var(--grid-line)] bg-[var(--app-bg)] px-12 py-10 lg:flex"
+      >
+        <span className="flex items-center gap-2.5">
+          <span className="grid size-9 place-items-center rounded-[10px] bg-primary text-primary-foreground">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4.5">
               <rect x="3" y="5" width="18" height="16" rx="2" />
               <path d="M3 10h18M8 3v4M16 3v4" />
             </svg>
           </span>
-          <span className="flex flex-col leading-none">
-            <span className="text-[15px] font-semibold tracking-tight">
-              Calendar of Activities
-            </span>
-            <span className="mt-0.5 text-[11px] text-white/60">
-              Learning &amp; Development
-            </span>
-          </span>
-        </Link>
+          <span className="font-heading text-base font-semibold">Calendar of Activities</span>
+        </span>
 
-        <div className="relative mt-auto max-w-[46ch]">
-          <h2 className="text-[30px] leading-[1.15] font-semibold tracking-tight">
-            The clash is caught when you book it, not on the day it happens.
+        <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col justify-center gap-8">
+          <h2 className="anim-up text-[40px] leading-[1.1] tracking-[-0.03em]">
+            Catch the clash{" "}
+            <span className="text-[var(--faint-foreground)]">when you book it.</span>
           </h2>
 
-          <ul className="mt-8 space-y-5">
-            {POINTS.map((p) => (
-              <li key={p.title} className="flex gap-3">
-                <span
-                  aria-hidden="true"
-                  className="mt-1.5 size-1.5 shrink-0 rounded-full bg-white/50"
-                />
-                <span>
-                  <span className="block text-sm font-medium">{p.title}</span>
-                  <span className="mt-0.5 block text-[13px] leading-relaxed text-white/60">
-                    {p.body}
+          <div className="anim-float">
+            <div
+              className="surface-raised anim-up overflow-hidden"
+              style={{ animationDelay: "0.1s" }}
+            >
+              <div className="grid grid-cols-5 border-b border-[var(--meter-track)] bg-[var(--weekend-bg)]">
+                {["Mon 23", "Tue 24", "Wed 25", "Thu 26", "Fri 27"].map((d) => (
+                  <span key={d} className="px-3 py-2.5 text-[13px] font-bold text-muted-foreground">
+                    {d}
                   </span>
-                </span>
-              </li>
-            ))}
-          </ul>
+                ))}
+              </div>
+              <div className="grid grid-cols-5 grid-rows-[34px_34px_34px] pt-3 pb-4">
+                {DEMO_BARS.map((b) => (
+                  /* Outer span places and (for the clash) shakes; the inner
+                     one grows in. One element cannot run both, because the
+                     inline delay would apply to each animation. */
+                  <span
+                    key={b.label}
+                    className={`mx-1.5 my-0.5 flex ${"shake" in b ? "anim-shake" : ""}`}
+                    style={{
+                      gridColumn: b.col,
+                      gridRow: b.row,
+                      animationDelay: "shake" in b ? "1.1s" : undefined,
+                    }}
+                  >
+                    <span
+                      className={`anim-bar flex w-full items-center gap-1.5 rounded-[7px] border px-2 text-[13px] font-semibold ${TONE[b.tone]}`}
+                      style={{ animationDelay: `${b.delay}s` }}
+                    >
+                      <span className="truncate">{b.label}</span>
+                      {"warn" in b && (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--conflict)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="ml-auto size-3.5 shrink-0">
+                          <path d="M12 3l10 18H2z" />
+                          <path d="M12 10v4M12 17.5v.01" />
+                        </svg>
+                      )}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-
-        <p className="relative mt-auto pt-10 text-[11px] text-white/40">
-          Accounts are issued by your administrator.
-        </p>
       </section>
 
       {/* Form panel */}
-      <section className="flex flex-col justify-center px-5 py-12 sm:px-10">
-        <div className="mx-auto w-full max-w-[380px]">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground lg:hidden"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-3.5">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-            Back
-          </Link>
-
+      <main className="flex min-w-0 flex-[1_1_440px] items-center justify-center px-6 py-10 sm:px-12">
+        <div
+          className="anim-up flex w-full max-w-[400px] flex-col gap-7"
+          style={{ animationDelay: "0.05s" }}
+        >
           <span
             aria-hidden="true"
-            className="mt-4 grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground lg:hidden"
+            className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground lg:hidden"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-5">
               <rect x="3" y="5" width="18" height="16" rx="2" />
@@ -119,46 +116,46 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
             </svg>
           </span>
 
-          <h1 className="mt-5 text-[26px] leading-none font-semibold tracking-tight lg:mt-0">
-            Sign in
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Use the account issued to you by your administrator.
-          </p>
-
-          <div className="mt-6">
-            <SignInForm callbackUrl={callbackUrl} />
+          <div className="flex flex-col gap-2">
+            <h1 className="text-[34px] leading-none">Sign in</h1>
+            <p className="text-base text-muted-foreground">
+              Use the account from your administrator.
+            </p>
           </div>
 
+          <SignInForm callbackUrl={callbackUrl} />
+
+          <Link
+            href="/"
+            className="self-center text-[15px] font-semibold text-primary hover:text-[var(--primary-hover)]"
+          >
+            ← Back to home
+          </Link>
+
           {process.env.NODE_ENV !== "production" && (
-            <div className="mt-6 rounded-lg border border-dashed border-[var(--grid-line)] p-3.5">
-              <p className="text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
-                Development accounts
-              </p>
-              <dl className="mt-2 space-y-1.5 font-mono text-[11px] tabular-nums">
+            <div className="rounded-xl border border-dashed border-[var(--input)] p-3.5">
+              <p className="eyebrow">Development accounts</p>
+              <dl className="mt-2 space-y-1.5 text-xs tabular-nums">
                 {[
                   ["Program Manager", "manager@example.gov.ph", "manager1234"],
                   ["Viewer", "viewer@example.gov.ph", "viewer1234"],
                   ["Administrator", "admin@example.gov.ph", "admin1234"],
                 ].map(([role, email, pw]) => (
                   <div key={email} className="flex flex-wrap items-baseline gap-x-2">
-                    <dt className="w-[108px] shrink-0 font-sans text-muted-foreground">
-                      {role}
-                    </dt>
-                    <dd className="text-foreground/80">
+                    <dt className="w-[108px] shrink-0 text-muted-foreground">{role}</dt>
+                    <dd className="text-[var(--body-muted)]">
                       {email} · {pw}
                     </dd>
                   </div>
                 ))}
               </dl>
-              <p className="mt-2.5 border-t border-[var(--grid-line)] pt-2 text-[11px] text-muted-foreground">
-                Shown only in development. Change these before the system is
-                used.
+              <p className="mt-2.5 border-t border-[var(--grid-line)] pt-2 text-xs text-muted-foreground">
+                Shown only in development. Change these before the system is used.
               </p>
             </div>
           )}
         </div>
-      </section>
+      </main>
     </div>
   );
 }

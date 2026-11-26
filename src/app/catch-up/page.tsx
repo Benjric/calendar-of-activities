@@ -1,17 +1,15 @@
 import Link from "next/link";
 
 import { buildAxis, place, summarise, toCatchUpRow } from "@/lib/catch-up";
-import { formatDateRange } from "@/lib/format";
+import { formatDate, formatDateRange } from "@/lib/format";
 import { requireUser } from "@/lib/authz";
 import { listCatchUpPlan } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-/** "once" and "twice" read as English; past that, a count is clearer. */
-function times(n: number): string {
-  if (n === 1) return "postponed once";
-  if (n === 2) return "postponed twice";
-  return `postponed ${n} times`;
+/** "1 postponement", "2 postponements". */
+function postponements(n: number): string {
+  return `${n} ${n === 1 ? "postponement" : "postponements"}`;
 }
 
 /**
@@ -19,9 +17,9 @@ function times(n: number): string {
  * RescheduleRecord rows. An activity can slip more than once, and each slip
  * keeps its own reason, which is why these are rows rather than two columns.
  *
- * Drawn as a timeline rather than a list because the question being asked is
- * "how far has this moved?", and a pair of dates in a sentence cannot be
- * compared down a column the way two marks on a shared axis can.
+ * Drawn as a timeline because the question being asked is "how far has this
+ * moved?". On arrival each vacated slot drops into place, the dashed path is
+ * drawn between them, and the current slot lands last.
  */
 export default async function CatchUpPage() {
   await requireUser();
@@ -35,6 +33,17 @@ export default async function CatchUpPage() {
   const rows = activities.map(toCatchUpRow);
   const summary = summarise(rows);
   const axis = buildAxis(rows, todayUTC);
+  const monthCols = axis.months.map((m) => `${m.weight}fr`).join(" ");
+
+  /* Every move with its reason, oldest first, for the per-row history. */
+  const history = new Map(
+    activities.map((a) => [
+      a.id,
+      [...a.reschedules].sort(
+        (x, y) => x.previousStartDate.getTime() - y.previousStartDate.getTime(),
+      ),
+    ]),
+  );
 
   const stats = [
     { label: "Activities postponed", value: String(summary.activities) },
@@ -46,188 +55,209 @@ export default async function CatchUpPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <div className="max-w-[72ch]">
-          <h1 className="font-heading text-[42px] leading-none">
-            Catch-up Plan
-          </h1>
-          <p className="mt-3 text-[15px] leading-relaxed text-[var(--body-muted)]">
-            Every postponement and its reason, kept in order. An activity that
-            slips twice shows both moves, so the plan can be read as a history,
-            not only a list of new dates.
-          </p>
-        </div>
+    <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-[22px]">
+      <div className="anim-up flex max-w-[760px] flex-col gap-2.5">
+        <h1 className="text-[32px] leading-tight sm:text-[38px]">Catch-up Plan</h1>
+        <p className="text-[17px] leading-relaxed text-[var(--body-muted)]">
+          Every postponement and its reason, kept in order. An activity that
+          slips twice shows both moves, so the plan can be read as a history,
+          not only a list of new dates.
+        </p>
       </div>
 
       {rows.length === 0 ? (
-        <div className="surface px-4 py-12 text-center">
-          <p className="text-sm font-semibold">Nothing postponed</p>
-          <p className="mx-auto mt-1 max-w-[42ch] text-[13px] text-muted-foreground">
+        <div className="anim-up flex flex-col items-center gap-1.5 rounded-2xl border border-dashed border-[var(--input)] bg-card px-6 py-12 text-center">
+          <strong className="text-base">Nothing postponed</strong>
+          <span className="text-[15px] text-muted-foreground">
             Rescheduling an activity adds it here automatically.
-          </p>
+          </span>
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div
+            className="anim-up grid gap-3 sm:grid-cols-3"
+            style={{ animationDelay: "0.05s" }}
+          >
             {stats.map((s) => (
-              <div key={s.label} className="surface flex flex-col gap-1.5 px-5 py-4">
-                <span className="text-[13px] text-muted-foreground">
-                  {s.label}
-                </span>
-                <span className="font-mono text-[32px] leading-none tabular-nums">
-                  {s.value}
-                </span>
+              <div key={s.label} className="surface flex flex-col gap-1 px-[18px] py-4">
+                <span className="text-sm text-muted-foreground">{s.label}</span>
+                <strong className="figure text-[30px] font-semibold">{s.value}</strong>
               </div>
             ))}
           </div>
 
           <section
             aria-label={`Postponed activities, ${axis.months[0]?.label} to ${axis.months.at(-1)?.label}`}
-            className="surface overflow-x-auto"
+            className="surface anim-up overflow-hidden"
+            style={{ animationDelay: "0.1s" }}
           >
-            <div className="min-w-[900px]">
-              {/* Axis header */}
-              <div className="grid grid-cols-[320px_minmax(0,1fr)_110px] border-b border-border bg-[var(--weekend-bg)]">
-                <span className="eyebrow px-6 py-3">Activity · latest reason</span>
-                <div className="relative mr-6 grid" style={{ gridTemplateColumns: axis.months.map((m) => `${m.weight}fr`).join(" ") }}>
-                  {axis.months.map((m, i) => (
-                    <span
-                      key={`${m.label}-${i}`}
-                      className="border-l border-border px-2 py-3 text-xs font-bold text-[var(--body-muted)]"
-                    >
-                      {m.label}
-                    </span>
-                  ))}
-                  {axis.todayAt !== null && (
-                    <span
-                      className="absolute bottom-0 -translate-x-1/2 rounded-t-[4px] bg-primary px-1.5 py-0.5 text-[11px] font-bold text-primary-foreground"
-                      style={{ left: `${axis.todayAt * 100}%` }}
-                    >
-                      Today
-                    </span>
-                  )}
-                </div>
-                <span className="eyebrow py-3 pr-6 text-right">Slipped</span>
-              </div>
-
-              {rows.map((r) => {
-                const current = place(r.current, axis);
-                return (
-                  <div
-                    key={r.id}
-                    className="grid min-h-[104px] grid-cols-[320px_minmax(0,1fr)_110px] border-b border-border last:border-b-0"
-                  >
-                    <div className="flex flex-col gap-1 px-6 py-4">
-                      <Link
-                        href={`/activities/${r.id}`}
-                        className="text-[15px] font-bold hover:underline"
+            <div className="overflow-x-auto">
+              <div className="min-w-[960px]">
+                {/* Axis header */}
+                <div className="grid grid-cols-[320px_minmax(0,1fr)_120px] border-b border-border bg-[var(--header-bg)]">
+                  <span className="eyebrow px-[22px] py-3">Activity · latest reason</span>
+                  <div className="relative grid" style={{ gridTemplateColumns: monthCols }}>
+                    {axis.months.map((m, i) => (
+                      <span
+                        key={`${m.label}-${i}`}
+                        className="border-l border-[var(--grid-line)] px-2.5 py-3 text-[13px] font-bold text-[var(--body-muted)]"
                       >
-                        {r.title}
-                      </Link>
-                      <span className="text-[13px] text-[var(--body-muted)]">
-                        {[
-                          r.divisionAcronym,
-                          times(r.postponements),
-                          `now ${formatDateRange(r.current.start, r.current.end)}`,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
+                        {m.label}
                       </span>
-                      {r.latestReason && (
-                        <span className="text-[13px] text-muted-foreground italic">
-                          “{r.latestReason}”
-                        </span>
-                      )}
-                    </div>
+                    ))}
+                  </div>
+                  <span className="eyebrow py-3 pr-[22px] pl-2.5 text-right">Slipped</span>
+                </div>
 
-                    <div className="relative mr-6">
-                      {/* Month rules, echoing the header columns. */}
-                      <div
-                        aria-hidden="true"
-                        className="absolute inset-0 grid"
-                        style={{ gridTemplateColumns: axis.months.map((m) => `${m.weight}fr`).join(" ") }}
-                      >
-                        {axis.months.map((m, i) => (
-                          <span key={`${m.label}-${i}`} className="border-l border-[var(--grid-line)]" />
-                        ))}
+                {rows.map((r, ri) => {
+                  const current = place(r.current, axis);
+                  const slots = [...r.vacated.map((v) => ({ v, now: false })), { v: r.current, now: true }];
+                  const base = 0.25 + ri * 0.12;
+                  const moves = history.get(r.id) ?? [];
+                  return (
+                    <div key={r.id} className="border-b border-[var(--meter-track)] transition-colors last:border-b-0 hover:bg-[var(--weekend-bg)]">
+                      <div className="grid min-h-[104px] grid-cols-[320px_minmax(0,1fr)_120px] items-stretch">
+                        <div className="flex flex-col gap-1.5 px-[22px] py-4">
+                          <Link
+                            href={`/activities/${r.id}`}
+                            className="text-base font-bold hover:text-primary"
+                          >
+                            {r.title}
+                          </Link>
+                          <span className="text-sm text-muted-foreground">
+                            {[r.divisionAcronym, r.venueName].filter(Boolean).join(" · ") ||
+                              `now ${formatDateRange(r.current.start, r.current.end)}`}
+                          </span>
+                          {r.latestReason && (
+                            <span className="text-sm leading-snug text-[var(--body-muted)]">
+                              “{r.latestReason}”
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="relative border-l border-[var(--grid-line)]">
+                          {/* Month rules, echoing the header columns. */}
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0 grid"
+                            style={{ gridTemplateColumns: monthCols }}
+                          >
+                            {axis.months.map((m, i) => (
+                              <span key={`${m.label}-${i}`} className={i ? "border-l border-[var(--meter-track)]" : ""} />
+                            ))}
+                          </div>
+
+                          {axis.todayAt !== null && (
+                            <span
+                              aria-hidden="true"
+                              className="absolute inset-y-0 w-0.5 bg-primary opacity-55"
+                              style={{ left: `${axis.todayAt * 100}%` }}
+                            />
+                          )}
+
+                          {/* The path the activity travelled, drawn from its
+                              first slot to where it sits now. */}
+                          {r.vacated.length > 0 && (() => {
+                            const first = place(r.vacated[0], axis);
+                            const from = first.left + first.width;
+                            return (
+                              <span
+                                aria-hidden="true"
+                                className="anim-grow absolute top-1/2 h-0 border-t-2 border-dashed border-[#d9a35b]"
+                                style={{
+                                  left: `${from}%`,
+                                  width: `${Math.max(0, current.left - from)}%`,
+                                  animationDelay: `${(base + 0.05).toFixed(2)}s`,
+                                }}
+                              />
+                            );
+                          })()}
+
+                          {slots.map(({ v, now: isNow }, i) => {
+                            const p = isNow ? current : place(v, axis);
+                            return (
+                              <span
+                                key={i}
+                                title={`${isNow ? "Now" : "Vacated"}: ${formatDateRange(v.start, v.end)}`}
+                                className={`anim-slot absolute top-1/2 -mt-[11px] box-border h-[22px] min-w-4 rounded-md ${
+                                  isNow
+                                    ? "bg-[var(--status-rescheduled-solid)] shadow-[0_4px_10px_-4px_rgb(184_115_26/0.6)]"
+                                    : "border-[1.5px] border-dashed border-[var(--status-rescheduled-border)] bg-card"
+                                }`}
+                                style={{
+                                  left: `${p.left}%`,
+                                  width: `${p.width}%`,
+                                  animationDelay: `${(base + i * 0.2).toFixed(2)}s`,
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+
+                        <div className="flex flex-col items-end justify-center gap-0.5 py-4 pr-[22px] pl-2.5">
+                          <strong className="figure text-xl font-semibold text-[var(--status-rescheduled)]">
+                            {r.slipDays} {r.slipDays === 1 ? "day" : "days"}
+                          </strong>
+                          <span className="text-[13px] text-muted-foreground">
+                            {postponements(r.postponements)}
+                          </span>
+                        </div>
                       </div>
 
-                      {axis.todayAt !== null && (
-                        <div
-                          aria-hidden="true"
-                          className="absolute inset-y-0 w-0.5 bg-primary/35"
-                          style={{ left: `${axis.todayAt * 100}%` }}
-                        />
+                      {moves.length > 0 && (
+                        <details className="px-[22px] pb-3">
+                          <summary className="-ml-2.5 inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-primary transition-colors hover:bg-accent">
+                            History
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="chev size-3.5"><path d="M6 9l6 6 6-6" /></svg>
+                          </summary>
+                          <ol className="details-body mt-1.5 mb-2 flex flex-col gap-2.5 rounded-xl border border-dashed border-[#e8c48f] bg-[var(--status-rescheduled-wash)] px-4 py-3.5 text-sm">
+                            <li className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                              <strong className="min-w-[110px]">Booked</strong>
+                              <span className="text-[var(--body-muted)] tabular-nums">
+                                {formatDateRange(moves[0].previousStartDate, moves[0].previousEndDate)}
+                              </span>
+                            </li>
+                            {moves.map((m, i) => (
+                              <li key={m.id} className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+                                <strong className="min-w-[110px]">{i === 0 ? "Moved" : "Moved again"}</strong>
+                                <span className="text-[var(--body-muted)]">
+                                  <span className="tabular-nums">
+                                    to {formatDateRange(m.proposedStartDate, m.proposedEndDate)}
+                                  </span>{" "}
+                                  · “{m.reasonForPostponement}”
+                                  <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">
+                                    recorded {formatDate(m.createdAt)}
+                                  </span>
+                                </span>
+                              </li>
+                            ))}
+                          </ol>
+                        </details>
                       )}
-
-                      {/* Connector from each vacated slot to the next, so the
-                          eye follows the move rather than inferring it. */}
-                      {r.vacated.map((v, i) => {
-                        const a = place(v, axis);
-                        const b =
-                          i + 1 < r.vacated.length
-                            ? place(r.vacated[i + 1], axis)
-                            : current;
-                        return (
-                          <div
-                            key={`link-${i}`}
-                            aria-hidden="true"
-                            className="absolute top-1/2 border-t-[1.5px] border-dashed border-[var(--status-dropped-solid)]"
-                            style={{
-                              left: `${a.left + a.width}%`,
-                              width: `${Math.max(0, b.left - (a.left + a.width))}%`,
-                            }}
-                          />
-                        );
-                      })}
-
-                      {r.vacated.map((v, i) => {
-                        const p = place(v, axis);
-                        return (
-                          <div
-                            key={`vacated-${i}`}
-                            title={`Vacated: ${formatDateRange(v.start, v.end)}`}
-                            className="absolute top-1/2 h-4 min-w-2.5 -translate-y-1/2 rounded-[4px] border-[1.5px] border-dashed border-[var(--status-dropped-solid)] bg-card"
-                            style={{ left: `${p.left}%`, width: `${p.width}%` }}
-                          />
-                        );
-                      })}
-
-                      <div
-                        title={`Now: ${formatDateRange(r.current.start, r.current.end)}`}
-                        className="absolute top-1/2 h-5 min-w-3.5 -translate-y-1/2 rounded-[5px] bg-[var(--status-rescheduled-solid)]"
-                        style={{ left: `${current.left}%`, width: `${current.width}%` }}
-                      />
                     </div>
-
-                    <span className="py-4 pr-6 text-right font-mono text-[15px] tabular-nums">
-                      +{r.slipDays} d
-                    </span>
-                  </div>
-                );
-              })}
-
-              <div className="flex flex-wrap items-center gap-6 border-t border-border px-6 py-3.5 text-[13px] text-[var(--body-muted)]">
-                <span className="flex items-center gap-2">
-                  <span
-                    aria-hidden="true"
-                    className="h-3 w-4.5 rounded-[3px] border-[1.5px] border-dashed border-[var(--status-dropped-solid)]"
-                  />
-                  Vacated schedule
-                </span>
-                <span className="flex items-center gap-2">
-                  <span
-                    aria-hidden="true"
-                    className="h-3 w-4.5 rounded-[3px] bg-[var(--status-rescheduled-solid)]"
-                  />
-                  Current proposed schedule
-                </span>
-                <span className="ml-auto">
-                  Each proposed schedule was re-run through the date conflict
-                  check when it was entered.
-                </span>
+                  );
+                })}
               </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-[18px] border-t border-border px-[22px] py-3.5 text-sm text-[var(--body-muted)]">
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden="true" className="h-3 w-[18px] rounded border-[1.5px] border-dashed border-[var(--status-rescheduled-border)] bg-card" />
+                Vacated dates
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span aria-hidden="true" className="h-3 w-[18px] rounded bg-[var(--status-rescheduled-solid)]" />
+                Where it sits now
+              </span>
+              {axis.todayAt !== null && (
+                <span className="inline-flex items-center gap-2">
+                  <span aria-hidden="true" className="h-3.5 w-0.5 bg-primary" />
+                  Today, {formatDate(todayUTC)}
+                </span>
+              )}
+              <span className="ml-auto text-muted-foreground">
+                Each new schedule was re-run through the date conflict check when it was entered.
+              </span>
             </div>
           </section>
         </>

@@ -3,10 +3,29 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { MARK } from "@/components/status-badge";
 import { STATUS_LABEL } from "@/lib/format";
 
 const FILTERABLE = ["PLANNED", "CONDUCTED", "RESCHEDULED"] as const;
 type Filterable = (typeof FILTERABLE)[number];
+
+/* Each chip wears its status's tint while switched on, so the row doubles as
+   the legend for the grid below it. */
+const CHIP_ON: Record<Filterable, string> = {
+  PLANNED:
+    "border-[var(--status-planned-border)] bg-[var(--status-planned-bg)] text-[var(--status-planned)]",
+  CONDUCTED:
+    "border-[var(--status-conducted-border)] bg-[var(--status-conducted-bg)] text-[var(--status-conducted)]",
+  RESCHEDULED:
+    "border-dashed border-[var(--status-rescheduled-border)] bg-[var(--status-rescheduled-bg)] text-[var(--status-rescheduled)]",
+};
+
+const CHIP_OFF: Record<Filterable, string> = {
+  PLANNED: "border-[var(--status-planned-border)] text-[var(--status-planned)]",
+  CONDUCTED: "border-[var(--status-conducted-border)] text-[var(--status-conducted)]",
+  RESCHEDULED:
+    "border-dashed border-[var(--status-rescheduled-border)] text-[var(--status-rescheduled)]",
+};
 
 /**
  * The calendar's filter row.
@@ -20,15 +39,11 @@ export function CalendarFilters({
   hidden,
   divisions,
   divisionId,
-  conflicts,
-  dotClass,
 }: {
   counts: Record<Filterable, number>;
   hidden: Filterable[];
   divisions: { id: string; name: string; acronym: string | null }[];
   divisionId: string;
-  conflicts: number;
-  dotClass: Record<string, string>;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -59,46 +74,38 @@ export function CalendarFilters({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2.5">
-      <span className="mr-1 text-[13px] font-semibold text-[var(--body-muted)]">
-        Show
-      </span>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div role="group" aria-label="Show statuses" className="flex flex-wrap gap-2">
+        {FILTERABLE.map((s) => {
+          const on = !off.has(s);
+          return (
+            <Link
+              key={s}
+              href={toggleHref(s)}
+              scroll={false}
+              role="switch"
+              aria-checked={on}
+              className={`press inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 text-sm font-semibold transition-[background-color,opacity] duration-200 ${
+                on ? CHIP_ON[s] : `bg-card opacity-60 line-through ${CHIP_OFF[s]}`
+              }`}
+            >
+              <span aria-hidden="true" className="font-bold">{MARK[s]}</span>
+              {STATUS_LABEL[s]}
+              <span className="font-bold tabular-nums">{counts[s]}</span>
+            </Link>
+          );
+        })}
+      </div>
 
-      {FILTERABLE.map((s) => {
-        const on = !off.has(s);
-        return (
-          <Link
-            key={s}
-            href={toggleHref(s)}
-            scroll={false}
-            role="switch"
-            aria-checked={on}
-            className={`flex h-11 items-center gap-2.5 rounded-full py-0 pr-4 pl-3 text-sm transition-colors ${
-              on
-                ? "border border-input bg-card font-medium text-foreground"
-                : "border border-dashed border-input bg-transparent text-muted-foreground"
-            }`}
-          >
-            <span
-              aria-hidden="true"
-              className={`size-2.5 rounded-full ${dotClass[s]} ${on ? "" : "opacity-40"}`}
-            />
-            {STATUS_LABEL[s]}
-            <span className="font-mono text-[13px] text-muted-foreground tabular-nums">
-              {counts[s]}
-            </span>
-          </Link>
-        );
-      })}
-
-      <span aria-hidden="true" className="mx-1.5 h-7 w-px bg-border" />
-
-      <label className="flex items-center gap-2 text-[13px] font-semibold text-[var(--body-muted)]">
-        Lead division
+      <div className="flex items-center gap-2.5">
+        <label htmlFor="div-filter" className="text-sm font-semibold text-[var(--body-muted)]">
+          Lead division
+        </label>
         <select
+          id="div-filter"
           value={divisionId}
           onChange={(e) => onDivision(e.currentTarget.value)}
-          className="h-11 rounded-[10px] border border-input bg-card px-3 text-sm font-normal text-foreground"
+          className="field-input w-auto min-w-[200px]"
         >
           <option value="">All divisions</option>
           {divisions.map((d) => (
@@ -107,19 +114,7 @@ export function CalendarFilters({
             </option>
           ))}
         </select>
-      </label>
-
-      {conflicts > 0 && (
-        <Link
-          href="/conflicts"
-          className="ml-auto flex h-11 items-center gap-2 rounded-[10px] bg-[var(--conflict-bg)] px-3.5 text-sm font-semibold text-[var(--conflict-text)] transition-colors hover:brightness-97"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true" className="size-4">
-            <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
-          </svg>
-          {conflicts} booked over a conflict
-        </Link>
-      )}
+      </div>
     </div>
   );
 }

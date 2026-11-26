@@ -28,7 +28,7 @@ export default async function RegisterPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-[26px] leading-none font-semibold tracking-tight">
+        <h1 className="anim-up text-[32px] leading-tight sm:text-[36px]">
           Register
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -41,12 +41,12 @@ export default async function RegisterPage() {
       {activities.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="surface overflow-x-auto">
+        <div className="surface anim-up overflow-x-auto" style={{ animationDelay: "0.05s" }}>
           <table className="w-full min-w-[900px] text-sm">
-            <thead>
+            <thead className="bg-[var(--header-bg)]">
               <tr className="border-b border-[var(--grid-line)] text-left">
                 {["Activity", "Dates", "Division", "Venue", "Type", "Physical", "Financial", "Status"].map((h) => (
-                  <th key={h} className="px-3 py-2.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  <th key={h} className="eyebrow px-3 py-3">
                     {h}
                   </th>
                 ))}
@@ -56,7 +56,7 @@ export default async function RegisterPage() {
               {activities.map((a) => {
                 const v = computeActivityVariance(a);
                 return (
-                  <tr key={a.id} className="transition-colors hover:bg-accent/40">
+                  <tr key={a.id} className="transition-colors hover:bg-[var(--header-bg)]">
                     <td className="px-3 py-2.5">
                       <Link href={`/activities/${a.id}`} className="font-medium hover:text-primary hover:underline">
                         {a.title}

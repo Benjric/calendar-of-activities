@@ -104,8 +104,8 @@ export function StatusActions({ activityId, status, initial }: Props) {
 
   if (status === "DROPPED") {
     return (
-      <div className="surface p-4">
-        <h2 className="text-sm font-semibold">Dropped</h2>
+      <div className="surface anim-up px-5 py-[18px]">
+        <h2 className="text-[19px]">Dropped</h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
           This activity is archived. It stays on record but no longer appears on
           the active calendar.
@@ -119,7 +119,7 @@ export function StatusActions({ activityId, status, initial }: Props) {
               router.refresh();
             })
           }
-          className="mt-3 rounded-lg border border-[var(--grid-line)] bg-card px-3.5 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-50"
+          className="btn-ghost mt-3"
         >
           {pending ? "Restoring…" : "Restore to calendar"}
         </button>
@@ -129,24 +129,24 @@ export function StatusActions({ activityId, status, initial }: Props) {
 
   return (
     <div className="surface overflow-hidden">
-      <h2 className="border-b border-[var(--grid-line)] px-4 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+      <h2 className="eyebrow border-b border-[var(--grid-line)] px-5 py-3 font-sans">
         Update status
       </h2>
 
-      <div className="p-4">
+      <div key={mode ?? "choose"} className="anim-swap px-5 py-4">
         {mode === null && (
           <>
             <p className="text-[13px] text-muted-foreground">
               Each status opens the fields that status requires.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" onClick={() => setMode("conducted")} className="rounded-lg border border-[var(--status-conducted)]/35 bg-[var(--status-conducted-bg)] px-3.5 py-2 text-sm font-medium text-[var(--status-conducted)] transition-colors hover:border-[var(--status-conducted)]/60">
+              <button type="button" onClick={() => setMode("conducted")} className="press lift min-h-11 rounded-[10px] border border-[var(--status-conducted-border)] bg-[var(--status-conducted-bg)] px-4 text-[15px] font-semibold text-[var(--status-conducted)]">
                 Mark Conducted
               </button>
-              <button type="button" onClick={() => setMode("rescheduled")} className="rounded-lg border border-[var(--status-rescheduled)]/35 bg-[var(--status-rescheduled-bg)] px-3.5 py-2 text-sm font-medium text-[var(--status-rescheduled)] transition-colors hover:border-[var(--status-rescheduled)]/60">
+              <button type="button" onClick={() => setMode("rescheduled")} className="press lift min-h-11 rounded-[10px] border border-dashed border-[var(--status-rescheduled-border)] bg-[var(--status-rescheduled-bg)] px-4 text-[15px] font-semibold text-[var(--status-rescheduled)]">
                 Reschedule
               </button>
-              <button type="button" onClick={() => setMode("dropped")} className="rounded-lg border border-[var(--grid-line)] px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent">
+              <button type="button" onClick={() => setMode("dropped")} className="press lift min-h-11 rounded-[10px] border border-[var(--status-dropped-border)] bg-[var(--status-dropped-bg)] px-4 text-[15px] font-semibold text-[var(--status-dropped)]">
                 Drop
               </button>
             </div>
@@ -208,18 +208,18 @@ export function StatusActions({ activityId, status, initial }: Props) {
               <span className="mb-1.5 block text-sm font-medium">
                 Reason for postponement<span className="ml-0.5 text-[var(--conflict)]">*</span>
               </span>
-              <textarea value={reason} onChange={(e) => setReason(e.currentTarget.value)} rows={3} className={`w-full rounded-lg border bg-card px-3 py-2 text-sm ${errors.reasonForPostponement ? "border-[var(--conflict)]" : "border-[var(--grid-line)]"}`} />
+              <textarea value={reason} onChange={(e) => setReason(e.currentTarget.value)} rows={3} className="field-input" aria-invalid={errors.reasonForPostponement ? true : undefined} />
               {errors.reasonForPostponement && <span className="mt-1 block text-[12px] text-[var(--conflict)]">{errors.reasonForPostponement}</span>}
             </label>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium">New start date</span>
-                <input type="date" value={proposedStart} onChange={(e) => setProposedStart(e.currentTarget.value)} className="w-full rounded-lg border border-[var(--grid-line)] bg-card px-3 py-2 text-sm" />
+                <input type="date" value={proposedStart} onChange={(e) => setProposedStart(e.currentTarget.value)} className="field-input" />
               </label>
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium">New end date</span>
-                <input type="date" value={proposedEnd} min={proposedStart} onChange={(e) => setProposedEnd(e.currentTarget.value)} className={`w-full rounded-lg border bg-card px-3 py-2 text-sm ${errors.proposedEndDate ? "border-[var(--conflict)]" : "border-[var(--grid-line)]"}`} />
+                <input type="date" value={proposedEnd} min={proposedStart} onChange={(e) => setProposedEnd(e.currentTarget.value)} className="field-input" aria-invalid={errors.proposedEndDate ? true : undefined} />
                 {errors.proposedEndDate && <span className="mt-1 block text-[12px] text-[var(--conflict)]">{errors.proposedEndDate}</span>}
               </label>
             </div>
@@ -249,7 +249,7 @@ export function StatusActions({ activityId, status, initial }: Props) {
               <span className="mb-1.5 block text-sm font-medium">
                 Reason for dropping<span className="ml-0.5 text-[var(--conflict)]">*</span>
               </span>
-              <textarea value={dropReason} onChange={(e) => setDropReason(e.currentTarget.value)} rows={3} className={`w-full rounded-lg border bg-card px-3 py-2 text-sm ${errors.reasonForDropping ? "border-[var(--conflict)]" : "border-[var(--grid-line)]"}`} />
+              <textarea value={dropReason} onChange={(e) => setDropReason(e.currentTarget.value)} rows={3} className="field-input" aria-invalid={errors.reasonForDropping ? true : undefined} />
               {errors.reasonForDropping && <span className="mt-1 block text-[12px] text-[var(--conflict)]">{errors.reasonForDropping}</span>}
             </label>
             <Actions pending={pending} onCancel={() => setMode(null)} onSubmit={handleDrop} label="Drop activity" destructive />
@@ -282,7 +282,7 @@ function Dimension(props: {
       : null;
 
   return (
-    <fieldset className="rounded-lg border border-[var(--grid-line)] p-3.5">
+    <fieldset className="rounded-xl border border-border p-4">
       <legend className="px-1 text-sm font-semibold">{props.label}</legend>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -290,19 +290,19 @@ function Dimension(props: {
           <span className="mb-1 block text-[12px] text-muted-foreground">
             Target{props.money && " (₱)"}
           </span>
-          <input type="number" step="any" min="0" value={props.target} onChange={(e) => props.onTarget(e.currentTarget.value)} className="w-full rounded-lg border border-[var(--grid-line)] bg-card px-3 py-2 font-mono text-sm tabular-nums" />
+          <input type="number" step="any" min="0" value={props.target} onChange={(e) => props.onTarget(e.currentTarget.value)} className="field-input tabular-nums" />
         </label>
         <label className="block">
           <span className="mb-1 block text-[12px] text-muted-foreground">
             Accomplishment{props.money && " (₱)"}
           </span>
-          <input type="number" step="any" min="0" value={props.accomplishment} onChange={(e) => props.onAccomplishment(e.currentTarget.value)} className="w-full rounded-lg border border-[var(--grid-line)] bg-card px-3 py-2 font-mono text-sm tabular-nums" />
+          <input type="number" step="any" min="0" value={props.accomplishment} onChange={(e) => props.onAccomplishment(e.currentTarget.value)} className="field-input tabular-nums" />
         </label>
       </div>
 
       {outcome && result !== null && (
-        <p className={`mt-2.5 flex items-center gap-1.5 text-[13px] font-medium ${
-          outcome === "GAIN" ? "text-[var(--gain)]" : outcome === "GAP" ? "text-[var(--gap)]" : "text-[var(--met)]"
+        <p key={outcome} className={`anim-spring mt-3 inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm font-bold ${
+          outcome === "GAIN" ? "border-[var(--gain-border)] bg-[var(--gain-bg)] text-[var(--gain)]" : outcome === "GAP" ? "border-[var(--gap-border)] bg-[var(--gap-bg)] text-[var(--gap)]" : "border-[var(--met-border)] bg-[var(--met-bg)] text-[var(--met)]"
         }`}>
           <span aria-hidden="true">{outcome === "GAIN" ? "▲" : outcome === "GAP" ? "▼" : "="}</span>
           {outcome === "GAIN" ? "Gain" : outcome === "GAP" ? "Gap" : "Met"}
@@ -318,7 +318,7 @@ function Dimension(props: {
           <span className="mb-1.5 block text-sm font-medium">
             Notable Practice<span className="ml-0.5 text-[var(--conflict)]">*</span>
           </span>
-          <textarea value={props.notablePractice} onChange={(e) => props.onNotablePractice(e.currentTarget.value)} rows={2} placeholder="What made exceeding the target possible?" className={`w-full rounded-lg border bg-card px-3 py-2 text-sm ${props.errorNotable ? "border-[var(--conflict)]" : "border-[var(--grid-line)]"}`} />
+          <textarea value={props.notablePractice} onChange={(e) => props.onNotablePractice(e.currentTarget.value)} rows={2} placeholder="What made exceeding the target possible?" className="field-input" aria-invalid={props.errorNotable ? true : undefined} />
           {props.errorNotable && <span className="mt-1 block text-[12px] text-[var(--conflict)]">{props.errorNotable}</span>}
         </label>
       )}
@@ -328,7 +328,7 @@ function Dimension(props: {
           <span className="mb-1.5 block text-sm font-medium">
             Justification<span className="ml-0.5 text-[var(--conflict)]">*</span>
           </span>
-          <textarea value={props.justification} onChange={(e) => props.onJustification(e.currentTarget.value)} rows={2} placeholder="Why did the accomplishment fall short?" className={`w-full rounded-lg border bg-card px-3 py-2 text-sm ${props.errorJustification ? "border-[var(--conflict)]" : "border-[var(--grid-line)]"}`} />
+          <textarea value={props.justification} onChange={(e) => props.onJustification(e.currentTarget.value)} rows={2} placeholder="Why did the accomplishment fall short?" className="field-input" aria-invalid={props.errorJustification ? true : undefined} />
           {props.errorJustification && <span className="mt-1 block text-[12px] text-[var(--conflict)]">{props.errorJustification}</span>}
         </label>
       )}
@@ -339,10 +339,10 @@ function Dimension(props: {
 function Actions({ pending, onCancel, onSubmit, label, destructive }: { pending: boolean; onCancel: () => void; onSubmit: () => void; label: string; destructive?: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      <button type="button" onClick={onCancel} className="rounded-lg border border-[var(--grid-line)] bg-card px-3.5 py-2 text-sm font-medium transition-colors hover:bg-accent">
+      <button type="button" onClick={onCancel} className="btn-ghost">
         Cancel
       </button>
-      <button type="button" onClick={onSubmit} disabled={pending} className={`ml-auto rounded-lg px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 ${destructive ? "bg-[var(--conflict)]" : "bg-primary"}`}>
+      <button type="button" onClick={onSubmit} disabled={pending} className={`btn-primary ml-auto ${destructive ? "bg-[var(--conflict)]" : ""}`}>
         {pending ? "Saving…" : label}
       </button>
     </div>

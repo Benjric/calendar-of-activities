@@ -49,52 +49,58 @@
 }
 
 /*
-  Palette: warm paper ground, ink text, one navy accent. Statuses and variance
-  outcomes are told apart by lightness as well as hue, and Gain/Gap use
-  blue/orange rather than green/red so the two never rest on colour vision
-  alone.
+  Palette, from the redesign mockup: cool grey ground, white cards, slate ink
+  and one blue accent. Statuses keep their tints and their marks, so colour is
+  never the only signal. Gain and Gap differ in lightness as well as hue, and
+  always carry an arrow and a word.
 */
 :root {
-  /* Page ground and raised surfaces. Cards sit a step lighter than the page. */
-  --app-bg: #f4f1e9;
-  --background: #fffefa;
-  --foreground: #1b2230;
-  --card: #fffefa;
-  --card-foreground: #1b2230;
-  --popover: #fffefa;
-  --popover-foreground: #1b2230;
+  /* Figures used to sit in a mono face. The redesign sets them in the body
+     sans with tabular figures, so `font-mono` now resolves to that. */
+  --font-mono: var(--font-sans);
 
-  --primary: #1e3a5f;
-  --primary-foreground: #fffefa;
-  --primary-hover: #142842;
+  /* Page ground and raised surfaces. Cards sit a step lighter than the page. */
+  --app-bg: #f7f8fa;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+  --primary-hover: #1e40af;
+  --primary-tint: #f5f8ff;
 
   /* Two steps of quiet text: body-secondary, then captions. */
-  --body-muted: #474e5c;
-  --muted-foreground: #5e6472;
+  --body-muted: #334155;
+  --muted-foreground: #475569;
+  --faint-foreground: #64748b;
 
-  /* Rules. `--border` outlines surfaces, `--input` outlines controls (it must
-     carry 3:1 against the card to be a visible affordance), `--grid-line`
-     divides content inside a surface. */
-  --border: #e0dacb;
-  --input: #c9c0ac;
-  --grid-line: #e6e0d3;
-  --ring: #c9c0ac;
-  --ring-strong: #1e3a5f;
+  /* Rules. `--border` outlines surfaces, `--input` outlines controls (3:1
+     against the card, so it reads as an affordance), `--grid-line` divides
+     content inside a surface. */
+  --border: #e3e7ee;
+  --input: #cbd5e1;
+  --grid-line: #e8ebf1;
+  --ring: #cbd5e1;
+  --ring-strong: #1d4ed8;
 
-  /* Tinted neutrals drawn from the paper ground. */
-  --secondary: #ede9de;
-  --secondary-foreground: #1b2230;
-  --muted: #ede9de;
-  --accent: #ede9de;
-  --accent-foreground: #1b2230;
-  --subtle: #ede9de;
-  --avatar-bg: #e3dccb;
-  --weekend-bg: #f8f5ee;
-  --outside-bg: #efebe1;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --subtle: #f1f5f9;
+  --avatar-bg: #eef2ff;
+  --avatar-foreground: #1e3a8a;
+  --weekend-bg: #fbfcfd;
+  --outside-bg: #fafbfc;
+  --header-bg: #f8fafc;
 
-  /* Activity lifecycle. Each status also carries a text label and a mark in
-     the UI, so colour is never the sole signal. `-solid` is the filled
-     calendar bar; the rest tint a badge. */
+  /* Activity lifecycle. `-solid` is a dot or a rail; the rest tint a badge
+     or a calendar bar. */
   --status-planned: #1d3f6e;
   --status-planned-bg: #e3ebf6;
   --status-planned-border: #9db5d8;
@@ -107,85 +113,100 @@
   --status-rescheduled-bg: #fbebd2;
   --status-rescheduled-border: #b8731a;
   --status-rescheduled-solid: #b8731a;
+  --status-rescheduled-wash: #fdf6ea;
   --status-dropped: #5e6472;
   --status-dropped-bg: #f1eee5;
   --status-dropped-border: #c9c0ac;
   --status-dropped-solid: #857d69;
+  --status-dropped-wash: #f6f4ee;
 
-  /* Variance outcomes: Gain / Gap / Met. Blue over green, orange over red. */
-  --gain: #174d80;
-  --gain-bg: #e4eef8;
-  --gain-solid: #1f5e99;
-  --gap: #8f3d0c;
-  --gap-bg: #fbe9dc;
-  --gap-solid: #b8581a;
-  --met: #474e5c;
-  --met-bg: #ede9de;
+  /* Variance outcomes: Gain / Gap / Met. */
+  --gain: #22553a;
+  --gain-bg: #e2efe7;
+  --gain-border: #9cc3ac;
+  --gain-solid: #2d6a4a;
+  --gap: #6e4209;
+  --gap-bg: #fbebd2;
+  --gap-border: #b8731a;
+  --gap-solid: #b8731a;
+  --met: #475569;
+  --met-bg: #f1f5f9;
+  --met-border: #cbd5e1;
+  --meter-target: #94a3b8;
+  --meter-track: #eef1f5;
 
   /* Collisions. A booking may continue over one, so this warns, never blocks. */
   --conflict: #a8361b;
   --conflict-text: #8e2c15;
   --conflict-bg: #fae8e1;
+  --conflict-wash: #fdf3ef;
   --conflict-border: #e7b9a8;
   --destructive: #a8361b;
 
-  --scroll-thumb: #d5cdba;
-  --scroll-thumb-hover: #bdb39b;
+  --scroll-thumb: #cbd5e1;
+  --scroll-thumb-hover: #94a3b8;
 
   --radius: 0.625rem;
 
-  --chart-1: #1e3a5f;
+  --chart-1: #1d4ed8;
   --chart-2: #2d6a4a;
   --chart-3: #b8731a;
   --chart-4: #5e6472;
   --chart-5: #a8361b;
 
-  --sidebar: #fffefa;
-  --sidebar-foreground: #1b2230;
-  --sidebar-primary: #1e3a5f;
-  --sidebar-primary-foreground: #fffefa;
-  --sidebar-accent: #ede9de;
-  --sidebar-accent-foreground: #1b2230;
-  --sidebar-border: #e0dacb;
-  --sidebar-ring: #1e3a5f;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #1d4ed8;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e3e7ee;
+  --sidebar-ring: #1d4ed8;
+
+  /* Motion. One curve for things arriving, one for things that spring. */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /*
-  Dark counterpart. The ground keeps the warm cast so the two themes read as
-  one product; every tinted status is re-derived against the dark card rather
-  than reused, which would fail contrast.
+  Dark counterpart. Every tinted status is re-derived against the dark card
+  rather than reused, which would fail contrast.
 */
 .dark {
-  --app-bg: #16181c;
-  --background: #1e2127;
-  --foreground: #f1efe8;
-  --card: #1e2127;
-  --card-foreground: #f1efe8;
-  --popover: #1e2127;
-  --popover-foreground: #f1efe8;
+  --app-bg: #0f131a;
+  --background: #161b23;
+  --foreground: #eef2f7;
+  --card: #161b23;
+  --card-foreground: #eef2f7;
+  --popover: #161b23;
+  --popover-foreground: #eef2f7;
 
-  --primary: #9dc0e8;
-  --primary-foreground: #12202f;
-  --primary-hover: #b6d2f2;
+  --primary: #8fb0f8;
+  --primary-foreground: #0c1730;
+  --primary-hover: #aec6fa;
+  --primary-tint: #172240;
 
-  --body-muted: #c2c6cf;
-  --muted-foreground: #9aa0ad;
+  --body-muted: #c3cad6;
+  --muted-foreground: #9aa4b5;
+  --faint-foreground: #8792a4;
 
-  --border: #343841;
-  --input: #4a4f5a;
-  --grid-line: #2c3038;
-  --ring: #4a4f5a;
-  --ring-strong: #9dc0e8;
+  --border: #2a313d;
+  --input: #424b5a;
+  --grid-line: #232a35;
+  --ring: #424b5a;
+  --ring-strong: #8fb0f8;
 
-  --secondary: #2a2e36;
-  --secondary-foreground: #f1efe8;
-  --muted: #2a2e36;
-  --accent: #2a2e36;
-  --accent-foreground: #f1efe8;
-  --subtle: #2a2e36;
-  --avatar-bg: #3a3f49;
-  --weekend-bg: #1a1d22;
-  --outside-bg: #191b20;
+  --secondary: #1f2530;
+  --secondary-foreground: #eef2f7;
+  --muted: #1f2530;
+  --accent: #1f2530;
+  --accent-foreground: #eef2f7;
+  --subtle: #1f2530;
+  --avatar-bg: #1e2a4a;
+  --avatar-foreground: #c7d6fb;
+  --weekend-bg: #131820;
+  --outside-bg: #12161d;
+  --header-bg: #131820;
 
   --status-planned: #a9c7ec;
   --status-planned-bg: #1c2a3d;
@@ -199,43 +220,51 @@
   --status-rescheduled-bg: #2e2312;
   --status-rescheduled-border: #6e4f21;
   --status-rescheduled-solid: #b8731a;
+  --status-rescheduled-wash: #241c10;
   --status-dropped: #9aa0ad;
   --status-dropped-bg: #24272e;
   --status-dropped-border: #454a55;
   --status-dropped-solid: #6b7180;
+  --status-dropped-wash: #1d2027;
 
-  --gain: #8fbde8;
-  --gain-bg: #172636;
-  --gain-solid: #3d7cb5;
-  --gap: #e3a271;
-  --gap-bg: #2e1e12;
-  --gap-solid: #b8581a;
-  --met: #9aa0ad;
-  --met-bg: #2a2e36;
+  --gain: #8fcaa6;
+  --gain-bg: #162b20;
+  --gain-border: #35573f;
+  --gain-solid: #3c8a60;
+  --gap: #e3b478;
+  --gap-bg: #2e2312;
+  --gap-border: #6e4f21;
+  --gap-solid: #b8731a;
+  --met: #9aa4b5;
+  --met-bg: #1f2530;
+  --met-border: #424b5a;
+  --meter-target: #5b6678;
+  --meter-track: #232a35;
 
   --conflict: #e8896f;
   --conflict-text: #efa793;
   --conflict-bg: #2f1a14;
+  --conflict-wash: #26150f;
   --conflict-border: #6b3427;
   --destructive: #e8896f;
 
-  --scroll-thumb: #3d424c;
-  --scroll-thumb-hover: #515764;
+  --scroll-thumb: #3a4250;
+  --scroll-thumb-hover: #4d5768;
 
-  --chart-1: #9dc0e8;
+  --chart-1: #8fb0f8;
   --chart-2: #8fcaa6;
   --chart-3: #e3b478;
   --chart-4: #9aa0ad;
   --chart-5: #e8896f;
 
-  --sidebar: #1e2127;
-  --sidebar-foreground: #f1efe8;
-  --sidebar-primary: #9dc0e8;
-  --sidebar-primary-foreground: #12202f;
-  --sidebar-accent: #2a2e36;
-  --sidebar-accent-foreground: #f1efe8;
-  --sidebar-border: #343841;
-  --sidebar-ring: #9dc0e8;
+  --sidebar: #161b23;
+  --sidebar-foreground: #eef2f7;
+  --sidebar-primary: #8fb0f8;
+  --sidebar-primary-foreground: #0c1730;
+  --sidebar-accent: #1f2530;
+  --sidebar-accent-foreground: #eef2f7;
+  --sidebar-border: #2a313d;
+  --sidebar-ring: #8fb0f8;
 }
 
 @layer base {
@@ -245,8 +274,6 @@
 
   html {
     @apply font-sans;
-    /* Warm paper ground so white cards read as raised surfaces rather than
-       dissolving into the page. */
     background-color: var(--app-bg);
   }
 
@@ -255,20 +282,17 @@
     background-color: var(--app-bg);
   }
 
-  /* The display serif carries headings only. Body copy stays on the sans so
-     long prose never sits in a face cut for large sizes. */
+  /* Lexend carries headings; body copy stays on Source Sans 3. */
   h1,
   h2,
   h3 {
-    font-family: var(--font-heading), Georgia, serif;
-    font-weight: 500;
-    letter-spacing: -0.015em;
+    font-family: var(--font-heading), system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 
-  /* Browser surfaces ship with defaults belonging to no design system. Theming
-     them is the cheapest signal the page was built rather than assembled. */
   ::selection {
-    background-color: color-mix(in oklch, var(--primary) 22%, transparent);
+    background-color: color-mix(in oklch, var(--primary) 20%, transparent);
     color: var(--foreground);
   }
 
@@ -276,6 +300,11 @@
     outline: 2px solid var(--ring-strong);
     outline-offset: 2px;
     border-radius: 3px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--faint-foreground);
   }
 
   * {
@@ -301,6 +330,7 @@
 
   /* Every figure in this product is a quantity to be compared down a column. */
   .tnum,
+  .font-mono,
   table,
   time {
     font-variant-numeric: tabular-nums;
@@ -308,37 +338,421 @@
 }
 
 @layer components {
-  /* Depth carries an offset and a soft blur. A zero-offset halo is decoration. */
   .surface {
     background-color: var(--card);
     border: 1px solid var(--border);
-    border-radius: 0.875rem;
-    box-shadow: 0 1px 2px -1px rgb(27 34 48 / 0.07);
+    border-radius: 1rem;
   }
 
   .surface-raised {
     background-color: var(--card);
     border: 1px solid var(--border);
-    border-radius: 0.875rem;
-    box-shadow:
-      0 1px 2px -1px rgb(27 34 48 / 0.1),
-      0 6px 16px -6px rgb(27 34 48 / 0.14),
-      0 12px 32px -12px rgb(27 34 48 / 0.1);
+    border-radius: 1.125rem;
+    box-shadow: 0 30px 60px -36px rgb(15 23 42 / 0.35);
   }
 
-  /* The eyebrow above a card or a section: the smallest type in the product,
-     so it takes weight and tracking rather than size to stay legible. */
+  /* The eyebrow above a card or a section. */
   .eyebrow {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted-foreground);
   }
 
-  /* Figures meant to be compared down a column, never body copy. */
+  /* Placeholder data is labelled as such wherever it is shown. */
+  .sample-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--status-rescheduled);
+    background: var(--status-rescheduled-bg);
+    border: 1px dashed var(--status-rescheduled-border);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
   .figure {
-    font-family: var(--font-mono), ui-monospace, monospace;
+    font-family: var(--font-heading), system-ui, sans-serif;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Buttons ---------- */
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: 600;
+    font-size: 15px;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px -12px color-mix(in oklch, var(--primary) 80%, transparent);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0) scale(0.99);
+  }
+  .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid var(--input);
+    background: var(--card);
+    color: var(--foreground);
+    font-weight: 600;
+    font-size: 15px;
+    transition: background-color 0.2s ease;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--accent);
+  }
+  .btn-ghost:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* An arrow that leans into the direction of travel on hover. */
+  .btn-primary .arr,
+  .nudge .arr {
+    transition: transform 0.25s var(--ease-out);
+  }
+  .btn-primary:hover .arr,
+  .nudge:hover .arr {
+    transform: translateX(3px);
+  }
+
+  /* ---------- Form fields ---------- */
+
+  .field-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--input);
+    border-radius: 10px;
+    background: var(--card);
+    font-size: 15px;
+    color: var(--foreground);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  textarea.field-input {
+    padding: 10px 12px;
+    line-height: 1.5;
+  }
+  .field-input:focus,
+  .field-shell:focus-within {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 15%, transparent);
+  }
+  .field-input[aria-invalid="true"] {
+    border-color: var(--conflict);
+  }
+  .field-shell {
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  /* ---------- Hover affordances ---------- */
+
+  /* A card that rises a little under the pointer. */
+  .lift {
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px -24px rgb(15 23 42 / 0.35);
+  }
+
+  .feat {
+    transition:
+      transform 0.3s var(--ease-out),
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  .feat:hover {
+    transform: translateY(-4px);
+    border-color: #c7d2fe;
+    box-shadow: 0 16px 32px -24px rgb(15 23 42 / 0.35);
+  }
+  .feat .feat-ico {
+    transition: transform 0.35s var(--ease-spring);
+  }
+  .feat:hover .feat-ico {
+    transform: rotate(-8deg) scale(1.08);
+  }
+
+  .press {
+    transition: transform 0.15s ease;
+  }
+  .press:active {
+    transform: scale(0.98);
+  }
+
+  /* ---------- Entrance and state animations ----------
+     Each takes its delay from an inline `animation-delay`, so a list can be
+     staggered without a class per position. `both` keeps an element at its
+     starting frame until its delay has passed. */
+
+  .anim-up {
+    animation: coa-up 0.5s var(--ease-out) both;
+  }
+  .anim-fade {
+    animation: coa-fade 0.35s ease both;
+  }
+  .anim-swap {
+    animation: coa-swap 0.35s var(--ease-out) both;
+  }
+  .anim-pop {
+    animation: coa-pop 0.3s var(--ease-out) both;
+  }
+  /* A collision arrives, then shakes once so it cannot be read past. */
+  .anim-alert {
+    animation:
+      coa-pop 0.3s var(--ease-out) both,
+      coa-shake 0.45s ease 0.3s 1;
+  }
+  .anim-shake {
+    animation: coa-shake 0.5s ease 0.35s 1;
+  }
+  .anim-spring {
+    animation: coa-spring 0.45s var(--ease-spring) both;
+  }
+  .anim-open {
+    animation: coa-open 0.3s var(--ease-out) both;
+  }
+  .anim-toast {
+    animation: coa-toast 3.2s ease both;
+  }
+  .anim-float {
+    animation: coa-float 6s ease-in-out infinite;
+  }
+
+  /* Calendar bars grow from where they start. */
+  .anim-bar {
+    transform-origin: left;
+    animation: coa-bar 0.45s var(--ease-out) both;
+  }
+  /* Meters, step rails and catch-up connectors draw from the left. */
+  .anim-grow {
+    transform-origin: left;
+    animation: coa-grow 0.9s var(--ease-out) both;
+  }
+  .anim-slot {
+    animation: coa-drop 0.4s var(--ease-out) both;
+  }
+
+  /* Today's date breathes, so the eye finds it without searching. */
+  .today-ring {
+    animation: coa-ring 2.6s ease-out infinite;
+  }
+
+  .anim-spin {
+    animation: coa-spin 0.8s linear infinite;
+  }
+
+  /* <details> disclosure: the chevron turns, the content slides in. */
+  details > summary {
+    list-style: none;
+  }
+  details > summary::-webkit-details-marker {
+    display: none;
+  }
+  details .chev {
+    transition: transform 0.2s ease;
+  }
+  details[open] .chev {
+    transform: rotate(180deg);
+  }
+  details[open] > .details-body {
+    animation: coa-open 0.3s var(--ease-out) both;
+  }
+}
+
+@keyframes coa-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes coa-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes coa-swap {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes coa-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes coa-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+@keyframes coa-spring {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes coa-open {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes coa-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  12% {
+    opacity: 1;
+    transform: none;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes coa-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes coa-bar {
+  from {
+    opacity: 0;
+    transform: scaleX(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes coa-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes coa-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes coa-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+@keyframes coa-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Motion is decoration here, never information: with reduced motion on,
+   everything simply appears in its final state. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

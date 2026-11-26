@@ -110,6 +110,13 @@ export async function getSummary() {
   return { planned, conducted, rescheduled, dropped, withOverrides };
 }
 
+/** The count behind the Conflicts tab badge: active activities booked over a collision. */
+export async function countWithOverrides() {
+  return prisma.activity.count({
+    where: { archivedAt: null, conflictOverrides: { some: {} } },
+  });
+}
+
 /**
  * The next activities starting on or after `from`, regardless of which month
  * the calendar is showing. Keeps the rail useful when the visible month is

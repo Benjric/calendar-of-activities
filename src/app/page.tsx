@@ -1,9 +1,44 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { LandingDemo } from "@/components/landing-demo";
 import { getCurrentUser } from "@/lib/authz";
 
 export const dynamic = "force-dynamic";
+
+const FEATURES = [
+  {
+    title: "Three checks before the save",
+    body: "Date, venue and participants are checked as you book. Warnings never block you.",
+    tint: "bg-[var(--conflict-bg)] text-[var(--conflict)]",
+    icon: (
+      <>
+        <path d="M12 3l10 18H2z" />
+        <path d="M12 10v4M12 17.5v.01" />
+      </>
+    ),
+  },
+  {
+    title: "Target against accomplishment",
+    body: "Physical and financial results, each with its own gain or gap.",
+    tint: "bg-[var(--status-conducted-bg)] text-[var(--status-conducted)]",
+    icon: <path d="M4 20V11M10 20V4M16 20v-7M21 20H3" />,
+  },
+  {
+    title: "Nothing quietly disappears",
+    body: "Postponements keep their reasons. Dropped activities stay in the archive.",
+    tint: "bg-[var(--status-rescheduled-bg)] text-[var(--status-rescheduled)]",
+    icon: (
+      <>
+        <path d="M3 7h13a5 5 0 0 1 0 10H8" />
+        <path d="M7 3L3 7l4 4" />
+      </>
+    ),
+  },
+];
+
+const STATUS_PILL =
+  "inline-flex min-h-11 items-center gap-2 rounded-full border px-[18px] text-base font-bold";
 
 /**
  * Landing page.
@@ -16,189 +51,162 @@ export default async function LandingPage() {
   if (user) redirect("/calendar");
 
   return (
-    <div className="flex flex-1 flex-col">
-      {/* Top bar */}
-      <header className="border-b border-[var(--grid-line)] bg-card/85 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[1520px] items-center gap-3 px-4 py-2.5 sm:px-6">
-          <span
-            aria-hidden="true"
-            className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-4">
-              <rect x="3" y="5" width="18" height="16" rx="2" />
-              <path d="M3 10h18M8 3v4M16 3v4" />
-            </svg>
-          </span>
-          <span className="flex flex-col leading-none">
-            <span className="text-[15px] font-semibold tracking-tight">
-              Calendar of Activities
+    <div className="flex flex-1 flex-col bg-card">
+      <header className="border-b border-[var(--grid-line)] bg-card">
+        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-4 px-7 py-3">
+          <Link href="/" className="flex items-center gap-2.5">
+            <span
+              aria-hidden="true"
+              className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-primary text-primary-foreground"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4.5">
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M3 10h18M8 3v4M16 3v4" />
+              </svg>
             </span>
-            <span className="mt-0.5 text-[11px] text-muted-foreground">
-              Learning &amp; Development
+            <span className="flex flex-col leading-tight">
+              <span className="font-heading text-base font-semibold">Calendar of Activities</span>
+              <span className="text-[13px] text-muted-foreground">Learning &amp; Development</span>
             </span>
-          </span>
-          <Link
-            href="/sign-in"
-            className="ml-auto rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-          >
+          </Link>
+          <nav aria-label="Page" className="ml-auto flex flex-wrap gap-1 text-[15px] font-medium">
+            <a href="#features" className="px-3 py-3 text-[var(--body-muted)] transition-colors hover:text-primary">
+              What it does
+            </a>
+            <a href="#accounts" className="px-3 py-3 text-[var(--body-muted)] transition-colors hover:text-primary">
+              Accounts
+            </a>
+          </nav>
+          <Link href="/sign-in" className="btn-primary px-[18px]">
             Sign in
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1520px] flex-1 px-4 sm:px-6">
-        {/* Hero */}
-        <section className="grid items-center gap-10 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:py-20">
-          <div>
-            <h1 className="text-[34px] leading-[1.1] font-semibold tracking-tight sm:text-[42px]">
-              The clash is caught when you book it,
-              <br className="hidden sm:block" />{" "}
-              <span className="text-muted-foreground">
-                not on the day it happens.
-              </span>
-            </h1>
-
-            <p className="mt-5 max-w-[58ch] text-[15px] leading-relaxed text-muted-foreground">
-              One calendar for the whole lifecycle of an activity. Book it and
-              the system checks the date, the venue and every participant
-              against what the office has already committed. Conduct it and the
-              same record holds what was achieved against what was planned.
-            </p>
-
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link
-                href="/sign-in"
-                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-[var(--primary-hover)] active:translate-y-px"
+      <main className="flex-1">
+        <section className="border-b border-[var(--grid-line)] bg-[var(--app-bg)]">
+          <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-14 px-7 pt-[72px] pb-20">
+            <div className="flex min-w-0 flex-[1_1_440px] flex-col gap-[22px]">
+              <h1
+                className="anim-up text-[38px] leading-[1.08] tracking-[-0.03em] sm:text-[50px]"
+                style={{ animationDelay: "0.06s" }}
               >
-                Sign in to the calendar
-              </Link>
-              <p className="text-[13px] text-muted-foreground">
-                Accounts are issued by your administrator.
+                The clash is caught when you book it,{" "}
+                <span className="text-[var(--faint-foreground)]">not on the day it happens.</span>
+              </h1>
+              <p
+                className="anim-up max-w-[520px] text-lg leading-relaxed text-[var(--body-muted)]"
+                style={{ animationDelay: "0.12s" }}
+              >
+                One calendar for every activity, from booking to accomplishment
+                report.
               </p>
-            </div>
-          </div>
-
-          {/* A real fragment of the product, not an abstract graphic. */}
-          <div className="surface-raised overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-[var(--grid-line)] px-4 py-2.5">
-              <span className="text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
-                Step 3 · Venue availability
-              </span>
-            </div>
-
-            <div className="p-4">
-              <p className="text-[11px] text-muted-foreground">Venue</p>
-              <p className="mt-1 rounded-lg border border-[var(--grid-line)] px-3 py-2 text-sm">
-                Conference Room A
-              </p>
-
-              <div className="mt-3 rounded-lg border border-[var(--conflict)]/35 bg-[var(--conflict-bg)] p-3.5">
-                <div className="flex items-start gap-2.5">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[var(--conflict)]">
-                    <path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+              <div
+                className="anim-up flex flex-wrap items-center gap-4"
+                style={{ animationDelay: "0.18s" }}
+              >
+                <Link href="/sign-in" className="btn-primary min-h-[52px] rounded-xl px-6 text-[17px]">
+                  Sign in to the calendar
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="arr size-[18px]">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[var(--conflict)]">
-                      Venue already scheduled
-                    </p>
-                    <p className="mt-1 text-[13px] leading-relaxed text-foreground/80">
-                      The selected venue is already scheduled for another
-                      activity on this date.
-                    </p>
-                    <div className="mt-2.5 rounded-md border border-[var(--conflict)]/20 bg-card/70 px-2.5 py-1.5 text-[12px]">
-                      <span className="font-medium">
-                        Learning Action Cell Orientation
-                      </span>
-                      <span className="mt-0.5 block font-mono text-muted-foreground tabular-nums">
-                        5–6 Oct 2026 · Conference Room A · CID
-                      </span>
-                    </div>
-                    <p className="mt-2.5 rounded-md border border-[var(--conflict)]/25 bg-card/60 px-2.5 py-2 text-[13px]">
-                      <span className="font-medium">Continue anyway.</span>{" "}
-                      <span className="text-muted-foreground">
-                        This decision is recorded against the activity.
-                      </span>
-                    </p>
-                  </div>
-                </div>
+                </Link>
+                <span className="text-[15px] text-muted-foreground">
+                  Accounts come from your administrator.
+                </span>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* What it does */}
-        <section className="border-t border-[var(--grid-line)] py-14">
-          <div className="grid gap-8 md:grid-cols-3">
-            <div>
-              <h2 className="text-base font-semibold tracking-tight">
-                Three checks before the save
-              </h2>
-              <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-                Date, venue and participants, each run against the live
-                calendar. None of them block you — a concurrent activity, a
-                shared hall and a double-booked officer are all sometimes
-                deliberate. The system makes the collision impossible to miss
-                and records who accepted it.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-base font-semibold tracking-tight">
-                Target against accomplishment
-              </h2>
-              <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-                Physical and financial variance computed separately, so an
-                activity that trained more people than planned while underspending
-                its budget reports both — a Notable Practice for the gain and a
-                Justification for the gap, on the same record.
-              </p>
-            </div>
-
-            <div>
-              <h2 className="text-base font-semibold tracking-tight">
-                Nothing quietly disappears
-              </h2>
-              <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
-                A postponed activity keeps every postponement and its reason,
-                and those become the catch-up plan. A dropped activity leaves
-                the calendar but stays in the archive, with the reason it was
-                dropped.
-              </p>
+            <div
+              className="anim-up min-w-0 flex-[1_1_480px]"
+              style={{ animationDelay: "0.15s" }}
+            >
+              <LandingDemo />
             </div>
           </div>
         </section>
 
-        {/* Who sees what */}
-        <section className="border-t border-[var(--grid-line)] py-14">
-          <h2 className="text-lg font-semibold tracking-tight">
-            Two kinds of account
-          </h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="surface p-5">
-              <h3 className="text-sm font-semibold">Program Manager</h3>
-              <p className="mt-1.5 text-[14px] leading-relaxed text-muted-foreground">
-                Books activities, runs the conflict checks, records what was
-                conducted, and manages postponements and drops.
-              </p>
+        <section id="features" className="mx-auto flex max-w-[1240px] scroll-mt-6 flex-col gap-9 px-7 py-20">
+          <h2 className="text-[34px]">What it does</h2>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5">
+            {FEATURES.map((f) => (
+              <article key={f.title} className="feat flex flex-col gap-3.5 rounded-[18px] border border-border bg-card p-[26px]">
+                <span className={`feat-ico grid size-12 place-items-center rounded-[14px] ${f.tint}`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-6">
+                    {f.icon}
+                  </svg>
+                </span>
+                <h3 className="text-xl">{f.title}</h3>
+                <p className="text-base leading-relaxed text-[var(--body-muted)]">{f.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-y border-[var(--grid-line)] bg-[var(--app-bg)]">
+          <div className="mx-auto flex max-w-[1240px] flex-col gap-7 px-7 py-16">
+            <h2 className="text-[26px]">Statuses</h2>
+            <div className="flex flex-wrap items-center gap-3.5">
+              <span className={`${STATUS_PILL} border-[var(--status-planned-border)] bg-[var(--status-planned-bg)] text-[var(--status-planned)]`}>
+                <span aria-hidden="true">○</span>Planned
+              </span>
+              <svg viewBox="0 0 28 16" fill="none" stroke="var(--meter-target)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-4 w-7">
+                <path d="M2 8h22M18 2l6 6-6 6" />
+              </svg>
+              <span className={`${STATUS_PILL} border-[var(--status-conducted-border)] bg-[var(--status-conducted-bg)] text-[var(--status-conducted)]`}>
+                <span aria-hidden="true">●</span>Conducted
+              </span>
+              <span className="text-[15px] text-muted-foreground">or</span>
+              <span className={`${STATUS_PILL} border-dashed border-[var(--status-rescheduled-border)] bg-[var(--status-rescheduled-bg)] text-[var(--status-rescheduled)]`}>
+                <span aria-hidden="true">→</span>Rescheduled
+              </span>
+              <span className="text-[15px] text-muted-foreground">or</span>
+              <span className={`${STATUS_PILL} border-[var(--status-dropped-border)] bg-[var(--status-dropped-bg)] text-[var(--status-dropped)]`}>
+                <span aria-hidden="true">×</span>Dropped
+              </span>
             </div>
-            <div className="surface p-5">
-              <h3 className="text-sm font-semibold">Viewer</h3>
-              <p className="mt-1.5 text-[14px] leading-relaxed text-muted-foreground">
-                Reads the calendar and the catch-up plan. Cannot create or
-                change anything.
-              </p>
-            </div>
+          </div>
+        </section>
+
+        <section id="accounts" className="mx-auto flex max-w-[1240px] scroll-mt-6 flex-col gap-7 px-7 py-20">
+          <h2 className="text-[34px]">Accounts</h2>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
+            <article className="feat flex gap-[18px] rounded-[18px] border border-border bg-card p-[26px]">
+              <span className="feat-ico grid size-[52px] shrink-0 place-items-center rounded-[14px] bg-[var(--avatar-bg)] text-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-6">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+                </svg>
+              </span>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-xl">Program Manager</h3>
+                <p className="text-base leading-relaxed text-[var(--body-muted)]">
+                  Books, updates and reports activities.
+                </p>
+              </div>
+            </article>
+            <article className="feat flex gap-[18px] rounded-[18px] border border-border bg-card p-[26px]">
+              <span className="feat-ico grid size-[52px] shrink-0 place-items-center rounded-[14px] bg-[var(--subtle)] text-[var(--body-muted)]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-6">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </span>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-xl">Viewer</h3>
+                <p className="text-base leading-relaxed text-[var(--body-muted)]">
+                  Reads the calendar and Catch-up Plan.
+                </p>
+              </div>
+            </article>
           </div>
         </section>
       </main>
 
       <footer className="border-t border-[var(--grid-line)]">
-        <div className="mx-auto flex max-w-[1520px] flex-wrap items-center gap-3 px-4 py-5 text-xs text-muted-foreground sm:px-6">
-          <span>Calendar of Activities · Learning &amp; Development</span>
-          <Link
-            href="/sign-in"
-            className="ml-auto underline underline-offset-2 hover:text-foreground"
-          >
+        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-3 px-7 py-[22px] text-sm text-muted-foreground">
+          <span>Learning &amp; Development</span>
+          <Link href="/sign-in" className="ml-auto font-semibold text-primary hover:text-[var(--primary-hover)]">
             Sign in
           </Link>
         </div>

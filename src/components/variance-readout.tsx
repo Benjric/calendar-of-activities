@@ -11,158 +11,155 @@ import {
 } from "@/lib/variance";
 
 /**
- * One variance dimension, physical or financial.
+ * One variance dimension, physical or financial, drawn as the redesign's
+ * target-against-accomplishment card.
  *
- * Renders target, accomplishment, and the derived result. Crucially it
- * distinguishes "not yet reported" from a shortfall: an activity marked
- * Conducted whose accomplishment nobody has entered shows as awaiting entry,
- * never as a Gap equal to the whole target.
+ * Crucially it distinguishes "not yet reported" from a shortfall: an activity
+ * marked Conducted whose accomplishment nobody has entered shows as awaiting
+ * entry, never as a Gap equal to the whole target.
  */
 
-/*
- * Gain reads blue and Gap orange rather than green and red: the pair is the
- * one comparison in this product a reader with red-green colour blindness
- * would otherwise have to take on trust. The mark and the word carry it too.
- */
-const OUTCOME_STYLE = {
-  GAIN: "text-[var(--gain)]",
-  GAP: "text-[var(--gap)]",
-  MET: "text-[var(--met)]",
+const OUTCOME_PILL = {
+  GAIN: "border-[var(--gain-border)] bg-[var(--gain-bg)] text-[var(--gain)]",
+  GAP: "border-[var(--gap-border)] bg-[var(--gap-bg)] text-[var(--gap)]",
+  MET: "border-[var(--met-border)] bg-[var(--met-bg)] text-[var(--met)]",
 } as const;
 
-/* The same three, as a tinted pill for the heading row. */
-const OUTCOME_BADGE = {
-  GAIN: "bg-[var(--gain-bg)] text-[var(--gain)]",
-  GAP: "bg-[var(--gap-bg)] text-[var(--gap)]",
-  MET: "bg-[var(--met-bg)] text-[var(--met)]",
+const OUTCOME_FILL = {
+  GAIN: "bg-[var(--gain-solid)]",
+  GAP: "bg-[var(--gap-solid)]",
+  MET: "bg-[var(--met)]",
 } as const;
 
-const OUTCOME_MARK = { GAIN: "▲", GAP: "▼", MET: "=" } as const;
+function OutcomeIcon({ outcome }: { outcome: "GAIN" | "GAP" | "MET" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="size-4">
+      {outcome === "GAIN" && <path d="M12 19V5M5 12l7-7 7 7" />}
+      {outcome === "GAP" && <path d="M12 5v14M5 12l7 7 7-7" />}
+      {outcome === "MET" && <path d="M5 9h14M5 15h14" />}
+    </svg>
+  );
+}
 
 export function VarianceReadout({
   label,
+  subtitle,
   variance,
   money = false,
+  delay = 0,
+  children,
 }: {
   label: string;
+  subtitle?: string;
   variance: Variance | null;
   money?: boolean;
+  /** Seconds to hold the meters back, so the second card follows the first. */
+  delay?: number;
+  children?: React.ReactNode;
 }) {
   const fmt = money ? formatPeso : formatCount;
   const fmtSigned = money ? formatPesoSigned : formatCountSigned;
 
-  if (!variance) {
-    return (
-      <div className="rounded-lg border bg-card p-4">
-        <h3 className="text-sm font-medium">{label}</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Not yet reported.
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          A blank accomplishment is not a shortfall — it is simply not entered.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-sm font-medium">{label}</h3>
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] font-bold ${OUTCOME_BADGE[variance.outcome]}`}
-        >
-          <span aria-hidden="true">{OUTCOME_MARK[variance.outcome]}</span>
-          {OUTCOME_LABEL[variance.outcome]}
-        </span>
+    <section
+      className="surface anim-up flex flex-col gap-4 px-6 py-[22px]"
+      style={{ animationDelay: `${delay.toFixed(2)}s` }}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-[19px]">{label}</h2>
+          {subtitle && (
+            <span className="text-sm text-muted-foreground">{subtitle}</span>
+          )}
+        </div>
+        {variance && (
+          <span
+            className={`anim-spring inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[15px] font-bold ${OUTCOME_PILL[variance.outcome]}`}
+            style={{ animationDelay: `${(delay + 0.65).toFixed(2)}s` }}
+          >
+            <OutcomeIcon outcome={variance.outcome} />
+            {OUTCOME_LABEL[variance.outcome]} · {fmtSigned(variance.result)}
+          </span>
+        )}
       </div>
 
-      <ProgressToTarget
-        target={Number(variance.target)}
-        accomplishment={Number(variance.accomplishment)}
-        outcome={variance.outcome}
-      />
+      {variance ? (
+        <>
+          <Meters
+            target={Number(variance.target)}
+            accomplishment={Number(variance.accomplishment)}
+            outcome={variance.outcome}
+            targetText={fmt(variance.target)}
+            accomplishmentText={fmt(variance.accomplishment)}
+            delay={delay}
+          />
+          <p className="text-[13px] text-muted-foreground">
+            {OUTCOME_DESCRIPTION[variance.outcome]}
+            {variance.achievementRate !== null && (
+              <> · {variance.achievementRate}% of target</>
+            )}
+          </p>
+        </>
+      ) : (
+        <div className="rounded-xl border-2 border-dashed border-[var(--input)] bg-[var(--outside-bg)] px-4 py-4">
+          <p className="text-[15px] font-semibold">Not yet reported.</p>
+          <p className="mt-0.5 text-[13px] text-muted-foreground">
+            A blank accomplishment is not a shortfall — it is simply not entered.
+          </p>
+        </div>
+      )}
 
-      <dl className="mt-3 grid grid-cols-3 gap-3 text-sm">
-        <div>
-          <dt className="text-xs text-muted-foreground">Target</dt>
-          <dd className="mt-0.5 font-mono tabular-nums">{fmt(variance.target)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Accomplishment</dt>
-          <dd className="mt-0.5 font-mono tabular-nums">
-            {fmt(variance.accomplishment)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted-foreground">Result</dt>
-          <dd
-            className={`mt-0.5 font-mono font-semibold tabular-nums ${OUTCOME_STYLE[variance.outcome]}`}
-          >
-            {fmtSigned(variance.result)}
-          </dd>
-        </div>
-      </dl>
-
-      <p className="mt-2 text-xs text-muted-foreground">
-        {OUTCOME_DESCRIPTION[variance.outcome]}
-        {variance.achievementRate !== null && (
-          <> · {variance.achievementRate}% of target</>
-        )}
-      </p>
-    </div>
+      {children}
+    </section>
   );
 }
 
 /**
- * Accomplishment drawn against target, with the target itself as a tick.
- *
- * The bar is scaled to whichever of the two is larger, so an overshoot has
- * somewhere to go: scaling to target alone would cap every Gain at a full
- * bar and make +1 look identical to +1000. The tick is what carries the
- * comparison — the fill only says how far along it got.
+ * Target and accomplishment as two bars on one scale, which is the larger of
+ * the two — scaling to target alone would cap every Gain at a full bar and
+ * make +1 look identical to +1000.
  */
-function ProgressToTarget({
+function Meters({
   target,
   accomplishment,
   outcome,
+  targetText,
+  accomplishmentText,
+  delay,
 }: {
   target: number;
   accomplishment: number;
   outcome: "GAIN" | "GAP" | "MET";
+  targetText: string;
+  accomplishmentText: string;
+  delay: number;
 }) {
-  if (!Number.isFinite(target) || !Number.isFinite(accomplishment)) return null;
-  if (target <= 0) return null;
+  const ceiling = Math.max(target, accomplishment, 0);
+  const pct = (v: number) =>
+    ceiling > 0 && Number.isFinite(v) ? Math.max(0, Math.min(100, (v / ceiling) * 100)) : 0;
 
-  const ceiling = Math.max(target, accomplishment);
-  const fill = Math.min(100, (accomplishment / ceiling) * 100);
-  const tick = (target / ceiling) * 100;
-
-  const fillColour =
-    outcome === "GAIN"
-      ? "bg-[var(--gain-solid)]"
-      : outcome === "GAP"
-        ? "bg-[var(--gap-solid)]"
-        : "bg-[var(--met)]";
+  const rows = [
+    { label: "Target", text: targetText, width: pct(target), fill: "bg-[var(--meter-target)]" },
+    { label: "Accomplishment", text: accomplishmentText, width: pct(accomplishment), fill: OUTCOME_FILL[outcome] },
+  ];
 
   return (
-    <div className="mt-3">
-      <div className="relative h-3 rounded-full bg-[var(--subtle)]">
+    <div className="flex flex-col gap-2.5">
+      {rows.map((r, i) => (
         <div
-          className={`absolute inset-y-0 left-0 rounded-full ${fillColour}`}
-          style={{ width: `${fill}%` }}
-        />
-        {/* The target line sits above the fill so it stays readable when the
-            bar runs past it. */}
-        <div
-          aria-hidden="true"
-          className="absolute -top-1 -bottom-1 w-0.5 bg-foreground"
-          style={{ left: `${tick}%` }}
-        />
-      </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">
-        Target marked at {Math.round(tick)}% of the bar
-      </p>
+          key={r.label}
+          className="grid grid-cols-[110px_minmax(0,1fr)_auto] items-center gap-3 text-[15px] sm:grid-cols-[130px_minmax(0,1fr)_120px]"
+        >
+          <span className="text-muted-foreground">{r.label}</span>
+          <span className="h-3 overflow-hidden rounded-full bg-[var(--meter-track)]">
+            <span
+              className={`anim-grow block h-full rounded-full ${r.fill}`}
+              style={{ width: `${r.width}%`, animationDelay: `${(delay + 0.2 + i * 0.15).toFixed(2)}s` }}
+            />
+          </span>
+          <strong className="text-right tabular-nums">{r.text}</strong>
+        </div>
+      ))}
     </div>
   );
 }
@@ -188,14 +185,12 @@ export function NarrativeBlock({
 
   return (
     <div
-      className={`mt-3 rounded-md border-l-2 bg-muted/40 px-3 py-2 ${
-        isGain ? "border-l-[var(--gain)]" : "border-l-[var(--gap)]"
-      }`}
+      className={`rounded-xl px-4 py-3 ${isGain ? "bg-[var(--gain-bg)]" : "bg-[var(--gap-bg)]"}`}
     >
-      <p className="text-xs font-medium text-muted-foreground">
+      <p className={`text-[13px] font-bold ${isGain ? "text-[var(--gain)]" : "text-[var(--gap)]"}`}>
         {isGain ? "Notable Practice" : "Justification"}
       </p>
-      <p className="mt-1 text-sm">{text}</p>
+      <p className="mt-1 text-[15px] leading-relaxed">{text}</p>
     </div>
   );
 }

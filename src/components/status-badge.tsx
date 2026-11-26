@@ -7,7 +7,7 @@ type Status = keyof typeof STATUS_LABEL;
  * mark distinguishes the four at a glance for anyone who cannot separate the
  * hues.
  */
-const MARK: Record<Status, string> = {
+export const MARK: Record<Status, string> = {
   PLANNED: "○",
   CONDUCTED: "●",
   RESCHEDULED: "→",
@@ -43,7 +43,7 @@ export function StatusBadge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${STYLE[status]} ${className}`}
+      className={`inline-flex h-[26px] items-center gap-1.5 rounded-full border px-2.5 text-[13px] font-bold whitespace-nowrap ${STYLE[status]} ${className}`}
     >
       <span aria-hidden="true">{MARK[status]}</span>
       {STATUS_LABEL[status]}
