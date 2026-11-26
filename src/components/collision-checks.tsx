@@ -18,7 +18,6 @@ import type { ConflictResult } from "@/lib/conflicts";
 const CHECKS: { kind: ConflictKind; label: string; runsAt: number }[] = [
   { kind: "DATE", label: "Dates", runsAt: 2 },
   { kind: "VENUE", label: "Venue", runsAt: 3 },
-  { kind: "PARTICIPANT", label: "Participants", runsAt: 4 },
 ];
 
 export function CollisionChecks({

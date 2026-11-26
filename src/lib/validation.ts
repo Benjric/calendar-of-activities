@@ -48,6 +48,16 @@ export const bookingSchema = z
     focalPersonId: optionalText,
     participantIds: z.array(z.string()).default([]),
 
+    /** How many participants are expected. Blank means not yet known. */
+    participantCount: z
+      .string()
+      .trim()
+      .transform((v) => (v === "" ? undefined : v))
+      .optional()
+      .refine((v) => v === undefined || /^\d+$/.test(v), "Enter a whole number")
+      .transform((v) => (v === undefined ? undefined : Number(v)))
+      .refine((v) => v === undefined || v <= 100000, "That is more than this field allows"),
+
     type: z.enum(["LND", "NON_LND"]),
     performanceIndicator: optionalText,
     hasFinancialReq: z.boolean().default(false),

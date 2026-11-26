@@ -36,7 +36,15 @@ export function SelectedActivity({
     { label: "Focal Person", value: activity.focalPerson?.fullName ?? "—" },
     { label: "Type", value: TYPE_LABEL[activity.type] },
     { label: "Source of Fund", value: fund },
-    { label: "Staff committed", value: String(activity._count.participants) },
+    {
+      label: "Participants",
+      value:
+        activity.participantCount !== null
+          ? String(activity.participantCount)
+          : activity._count.participants
+            ? `${activity._count.participants} named`
+            : "—",
+    },
   ];
 
   const href = `/activities/${activity.id}`;

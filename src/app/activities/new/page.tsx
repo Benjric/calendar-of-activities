@@ -21,7 +21,7 @@ export default async function NewActivityPage() {
         </Link>
         <h1 className="text-[32px] leading-tight">Book an activity</h1>
         <p className="max-w-[70ch] text-[15px] text-muted-foreground">
-          The date, venue and participant checks run against the live calendar as
+          The date and venue checks run against the live calendar as
           you fill this in. Each one can be continued past — doing so is
           recorded against the activity.
         </p>

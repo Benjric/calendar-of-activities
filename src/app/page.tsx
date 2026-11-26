@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const FEATURES = [
   {
     title: "Three checks before the save",
-    body: "Date, venue and participants are checked as you book. Warnings never block you.",
+    body: "Date and venue are checked as you book. Warnings never block you.",
     tint: "bg-[var(--conflict-bg)] text-[var(--conflict)]",
     icon: (
       <>

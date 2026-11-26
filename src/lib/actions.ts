@@ -135,6 +135,7 @@ async function bookActivityAuthorized(
         venueId: venue?.id,
         leadDivisionId: input.leadDivisionId,
         focalPersonId: input.focalPersonId,
+        participantCount: input.participantCount,
         type: input.type,
         performanceIndicator: input.performanceIndicator,
         hasFinancialReq: input.hasFinancialReq,

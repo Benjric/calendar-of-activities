@@ -19,6 +19,7 @@ const LIST_SELECT = {
   status: true,
   type: true,
   hasFinancialReq: true,
+  participantCount: true,
   sourceOfFund: true,
   physicalTarget: true,
   physicalAccomplishment: true,

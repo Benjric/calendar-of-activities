@@ -250,12 +250,25 @@ export default async function ActivityPage({
 
           <section className="surface overflow-hidden">
             <h2 className="eyebrow border-b border-[var(--grid-line)] px-5 py-3 font-sans">
-              Participants · {activity.participants.length}
+              Participants
             </h2>
-            {activity.participants.length === 0 ? (
-              <p className="px-5 py-5 text-center text-sm text-muted-foreground">
-                None recorded.
+            {/* New bookings record a head count; older ones may name people. */}
+            {activity.participantCount !== null && (
+              <p className="flex items-baseline gap-2 px-5 py-4">
+                <strong className="figure text-[28px] leading-none font-semibold">
+                  {activity.participantCount}
+                </strong>
+                <span className="text-sm text-muted-foreground">
+                  {activity.participantCount === 1 ? "participant" : "participants"} expected
+                </span>
               </p>
+            )}
+            {activity.participants.length === 0 ? (
+              activity.participantCount === null && (
+                <p className="px-5 py-5 text-center text-sm text-muted-foreground">
+                  Not recorded.
+                </p>
+              )
             ) : (
               <ul className="divide-y divide-[var(--grid-line)]">
                 {activity.participants.map((p) => (

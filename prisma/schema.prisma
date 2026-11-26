@@ -155,6 +155,11 @@ model Activity {
   startDate DateTime @db.Date
   endDate   DateTime @db.Date
 
+  // --- Step 4: Participants ---
+  // How many people are expected. Bookings record only the number; named
+  // participants (ActivityParticipant) remain for activities booked earlier.
+  participantCount Int?
+
   // --- Steps 3 & 5: Admin details ---
   venueId        String?
   leadDivisionId String?

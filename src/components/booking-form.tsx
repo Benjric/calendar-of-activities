@@ -53,7 +53,7 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [venueName, setVenueName] = useState("");
-  const [participantIds, setParticipantIds] = useState<string[]>([]);
+  const [participantCount, setParticipantCount] = useState("");
   const [leadDivisionId, setLeadDivisionId] = useState("");
   const [focalPersonId, setFocalPersonId] = useState("");
   const [type, setType] = useState<"LND" | "NON_LND">("LND");
@@ -72,9 +72,9 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
   const datesValid = Boolean(startDate && endDate && endDate >= startDate);
 
   /**
-   * Re-checks on every change to dates, venue, or participants. The wizard
-   * reveals these step by step, but the check always runs against the full
-   * current selection — a venue picked in step 3 must not wait for step 4.
+   * Re-checks on every change to dates or venue. The wizard reveals these
+   * step by step, but the check always runs against the full current
+   * selection — a venue picked in step 3 is checked at once.
    */
   const runCheck = useCallback(async () => {
     if (!datesValid) {
@@ -87,7 +87,9 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
         startDate,
         endDate,
         venueName: venueName.trim() || null,
-        participantIds,
+        // Bookings record a head count, not names, so there is nobody to
+        // check for double-booking; only dates and venue are checked.
+        participantIds: [],
       });
       setConflicts(found);
       // Drop acknowledgements for conflicts that no longer exist, so an
@@ -98,7 +100,7 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
     } finally {
       setChecking(false);
     }
-  }, [datesValid, startDate, endDate, venueName, participantIds]);
+  }, [datesValid, startDate, endDate, venueName]);
 
   useEffect(() => {
     const t = setTimeout(runCheck, 250);
@@ -124,6 +126,8 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
       if (startDate && endDate && endDate < startDate)
         e.endDate = "The end date cannot fall before the start date";
     }
+    if (n === 4 && participantCount.trim() && !/^\d+$/.test(participantCount.trim()))
+      e.participantCount = "Enter a whole number";
     if (n === 6 && hasFinancialReq) {
       if (!sourceOfFund) e.sourceOfFund = "Select a source of fund";
       if (sourceOfFund === "OTHER" && !sourceOfFundOther.trim())
@@ -150,7 +154,7 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
         venueName,
         leadDivisionId,
         focalPersonId,
-        participantIds,
+        participantCount,
         type,
         performanceIndicator,
         hasFinancialReq,
@@ -183,7 +187,6 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
   const stepKind: Record<number, ConflictKind | undefined> = {
     2: "DATE",
     3: "VENUE",
-    4: "PARTICIPANT",
   };
 
 
@@ -198,15 +201,11 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
   const reviseFor = (c: ConflictResult) =>
     c.kind === "VENUE"
       ? { onRevise: () => setVenueName(""), reviseLabel: "Choose another venue" }
-      : c.kind === "PARTICIPANT" && c.affectedPeople?.length
-        ? {
-            onRevise: () =>
-              setParticipantIds((prev) =>
-                prev.filter((id) => !c.affectedPeople?.some((p) => p.id === id)),
-              ),
-            reviseLabel: "Remove committed people",
-          }
-        : {};
+      : {};
+
+  const count = participantCount.trim() === "" ? null : Number(participantCount);
+  const setCount = (n: number) =>
+    setParticipantCount(String(Math.max(0, Math.min(100000, Math.round(n)))));
 
   const alertsFor = (kinds: ConflictKind[]) =>
     relevant(kinds).map((c) => (
@@ -353,51 +352,69 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
             )}
 
             {step === 4 && (
-              <Section title="Participants" hint="Anyone already committed to an overlapping activity is flagged.">
-                <fieldset>
-                  <legend className="mb-2 text-[15px] font-semibold">
-                    Participants{" "}
-                    <span className="font-normal text-muted-foreground">
-                      ({participantIds.length} selected)
+              <Section title="Participants" hint="How many people are expected to attend. Only the number is recorded.">
+                <div>
+                  <label htmlFor="participant-count" className="mb-1.5 block text-[15px] font-semibold">
+                    Number of participants
+                  </label>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="field-shell flex h-14 items-stretch overflow-hidden rounded-xl border border-[var(--input)] bg-card">
+                      <button
+                        type="button"
+                        aria-label="One fewer participant"
+                        onClick={() => setCount((count ?? 0) - 1)}
+                        disabled={!count}
+                        className="press grid w-12 place-items-center text-[var(--body-muted)] transition-colors hover:bg-accent disabled:opacity-40"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true" className="size-4"><path d="M5 12h14" /></svg>
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={participantCount}
+                        onChange={(e) => setParticipantCount(e.currentTarget.value.replace(/[^\d]/g, ""))}
+                        placeholder="0"
+                        aria-invalid={errors.participantCount ? true : undefined}
+                        id="participant-count"
+                        className="figure w-28 border-x border-[var(--grid-line)] bg-transparent text-center text-2xl font-semibold outline-none"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        aria-label="One more participant"
+                        onClick={() => setCount((count ?? 0) + 1)}
+                        className="press grid w-12 place-items-center text-[var(--body-muted)] transition-colors hover:bg-accent"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true" className="size-4"><path d="M12 5v14M5 12h14" /></svg>
+                      </button>
+                    </div>
+                    <span className="text-[15px] text-muted-foreground">
+                      {count === null ? "Leave blank if not yet known." : count === 1 ? "participant" : "participants"}
                     </span>
-                  </legend>
-                  <div className="max-h-72 space-y-px overflow-y-auto rounded-xl border border-border p-1">
-                    {lookups.people.map((p) => {
-                      const checked = participantIds.includes(p.id);
-                      return (
-                        <label key={p.id} className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${checked ? "bg-[var(--primary-tint)]" : "hover:bg-[var(--header-bg)]"}`}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(e) => {
-                              // Read the value NOW. React clears `currentTarget`
-                              // once the handler returns, and the updater below
-                              // runs later — reading it in there throws.
-                              const isChecked = e.currentTarget.checked;
-                              setParticipantIds((prev) =>
-                                isChecked
-                                  ? [...new Set([...prev, p.id])]
-                                  : prev.filter((id) => id !== p.id),
-                              );
-                            }}
-                            className="size-4 accent-[var(--primary)]"
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="font-semibold">{p.fullName}</span>
-                            {p.position && <span className="block text-xs text-muted-foreground">{p.position}</span>}
-                          </span>
-                          {p.division?.acronym && (
-                            <span className="shrink-0 rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                              {p.division.acronym}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
                   </div>
-                </fieldset>
-                <CheckState checking={checking} found={relevant(["PARTICIPANT"])} clean={datesValid && participantIds.length > 0} cleanMsg="Everyone selected is free for these dates." />
-                {alertsFor(["PARTICIPANT"])}
+                  {errors.participantCount && (
+                    <span className="anim-open mt-1.5 block text-[13px] font-medium text-[var(--conflict-text)]">{errors.participantCount}</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Quick pick</span>
+                  {[10, 25, 50, 100].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setCount(n)}
+                      aria-pressed={count === n}
+                      className={`press min-h-10 rounded-full border px-4 text-sm font-semibold tabular-nums transition-[background-color,border-color,color] duration-200 ${
+                        count === n
+                          ? "border-primary bg-[var(--primary-tint)] text-primary"
+                          : "border-border bg-card text-[var(--body-muted)] hover:border-[var(--meter-target)]"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
               </Section>
             )}
 
@@ -534,7 +551,7 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
               <dt className="text-muted-foreground">Venue</dt>
               <dd className="m-0 font-semibold">{venueName.trim() || "—"}</dd>
               <dt className="text-muted-foreground">People</dt>
-              <dd className="m-0 font-semibold tabular-nums">{participantIds.length || "—"}</dd>
+              <dd className="m-0 font-semibold tabular-nums">{count ?? "—"}</dd>
             </dl>
           </section>
 
