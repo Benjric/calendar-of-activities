@@ -678,6 +678,12 @@
     animation: coa-spin 0.8s linear infinite;
   }
 
+  /* The bell rings twice when something new has arrived, then rests. */
+  .bell-ring {
+    transform-origin: 50% 10%;
+    animation: coa-bell 0.9s ease-in-out 0.5s 2;
+  }
+
   /* <details> disclosure: the chevron turns, the content slides in. */
   details > summary {
     list-style: none;
@@ -837,6 +843,27 @@
   }
   100% {
     box-shadow: 0 0 0 0 transparent;
+  }
+}
+@keyframes coa-bell {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  15% {
+    transform: rotate(14deg);
+  }
+  30% {
+    transform: rotate(-12deg);
+  }
+  45% {
+    transform: rotate(8deg);
+  }
+  60% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(2deg);
   }
 }
 @keyframes coa-tick {

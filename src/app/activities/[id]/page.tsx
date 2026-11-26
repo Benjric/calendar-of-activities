@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AttachmentList } from "@/components/attachment-list";
+import { BookedToast } from "@/components/booked-toast";
 import { StatusActions } from "@/components/status-actions";
 import { StatusBadge } from "@/components/status-badge";
 import { NarrativeBlock, VarianceReadout } from "@/components/variance-readout";
@@ -88,6 +89,7 @@ export default async function ActivityPage({
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-5">
+      <BookedToast title={activity.title} conflicts={activity.conflictOverrides.length} />
       <div className="anim-up flex flex-col gap-2">
         <Link
           href="/calendar"

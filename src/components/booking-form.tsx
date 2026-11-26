@@ -167,7 +167,7 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
       });
 
       if (result.ok && result.activityId) {
-        router.push(`/activities/${result.activityId}`);
+        router.push(`/activities/${result.activityId}?booked=1`);
         return;
       }
       if (result.conflicts?.length) {

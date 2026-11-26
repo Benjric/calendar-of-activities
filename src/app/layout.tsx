@@ -3,6 +3,7 @@ import { Lexend, Source_Sans_3 } from "next/font/google";
 import Link from "next/link";
 
 import { NavLinks } from "@/components/nav-links";
+import { NotificationBell } from "@/components/notification-bell";
 import { UserMenu } from "@/components/user-menu";
 import {
   canManageAccounts,
@@ -10,6 +11,8 @@ import {
   getCurrentUser,
   ROLE_LABEL,
 } from "@/lib/authz";
+import { formatDateRange } from "@/lib/format";
+import { getBookingNotifications } from "@/lib/notifications";
 import { countWithOverrides } from "@/lib/queries";
 
 import "./globals.css";
@@ -42,6 +45,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const canManage = canManageActivities(user?.role);
   const canAdminister = canManageAccounts(user?.role);
   const conflictCount = canManage ? await countWithOverrides() : 0;
+  const notifications = user?.id
+    ? await getBookingNotifications(user.id)
+    : { items: [], unread: 0 };
+  const bellItems = notifications.items.map((n) => ({
+    id: n.id,
+    title: n.title,
+    dates: formatDateRange(n.startDate, n.endDate),
+    when: ago(n.createdAt),
+    by: n.by,
+    unread: n.unread,
+  }));
 
   return (
     <html
@@ -87,6 +101,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   </Link>
                 )}
 
+                <NotificationBell
+                  key={`${notifications.unread}-${bellItems[0]?.id ?? ""}`}
+                  items={bellItems}
+                  unread={notifications.unread}
+                />
+
                 <UserMenu
                   name={user.name ?? user.email ?? "User"}
                   email={user.email ?? ""}
@@ -121,4 +141,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </body>
     </html>
   );
+}
+
+/** "Just now", "12 min ago", "3 h ago", "2 days ago". */
+function ago(date: Date): string {
+  const mins = Math.floor((Date.now() - date.getTime()) / 60_000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "Yesterday" : `${days} days ago`;
 }
