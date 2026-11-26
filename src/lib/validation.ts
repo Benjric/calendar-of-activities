@@ -45,7 +45,11 @@ export const bookingSchema = z
      */
     venueName: optionalText,
     leadDivisionId: optionalText,
-    focalPersonId: optionalText,
+    /**
+     * Focal persons are typed too. An unrecognised name is created on save
+     * and becomes a suggestion for the next booking.
+     */
+    focalPersonName: optionalText,
     participantIds: z.array(z.string()).default([]),
 
     /** How many participants are expected. Blank means not yet known. */

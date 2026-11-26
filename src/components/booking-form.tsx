@@ -9,6 +9,7 @@ import {
   ProgramCombobox,
   type ProgramOption,
 } from "@/components/program-combobox";
+import { PersonCombobox } from "@/components/person-combobox";
 import { VenueCombobox, type VenueOption } from "@/components/venue-combobox";
 import { bookActivity, checkConflicts } from "@/lib/actions";
 import type { ConflictResult } from "@/lib/conflicts";
@@ -55,7 +56,7 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
   const [venueName, setVenueName] = useState("");
   const [participantCount, setParticipantCount] = useState("");
   const [leadDivisionId, setLeadDivisionId] = useState("");
-  const [focalPersonId, setFocalPersonId] = useState("");
+  const [focalPersonName, setFocalPersonName] = useState("");
   const [type, setType] = useState<"LND" | "NON_LND">("LND");
   const [performanceIndicator, setPerformanceIndicator] = useState("");
   const [hasFinancialReq, setHasFinancialReq] = useState(false);
@@ -153,7 +154,7 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
         endDate,
         venueName,
         leadDivisionId,
-        focalPersonId,
+        focalPersonName,
         participantCount,
         type,
         performanceIndicator,
@@ -430,12 +431,12 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
                     </select>
                   </Field>
                   <Field label="Focal Person">
-                    <select value={focalPersonId} onChange={(e) => setFocalPersonId(e.currentTarget.value)} className="field-input">
-                      <option value="">— Not set —</option>
-                      {lookups.people.map((p) => (
-                        <option key={p.id} value={p.id}>{p.fullName}</option>
-                      ))}
-                    </select>
+                    <PersonCombobox
+                      value={focalPersonName}
+                      onChange={setFocalPersonName}
+                      people={lookups.people}
+                      className="field-input"
+                    />
                   </Field>
                 </div>
               </Section>
@@ -550,6 +551,8 @@ export function BookingForm({ lookups }: { lookups: Lookups }) {
               <dd className="m-0 font-semibold tabular-nums">{dateRange}</dd>
               <dt className="text-muted-foreground">Venue</dt>
               <dd className="m-0 font-semibold">{venueName.trim() || "—"}</dd>
+              <dt className="text-muted-foreground">Focal Person</dt>
+              <dd className="m-0 font-semibold">{focalPersonName.trim() || "—"}</dd>
               <dt className="text-muted-foreground">People</dt>
               <dd className="m-0 font-semibold tabular-nums">{count ?? "—"}</dd>
             </dl>

@@ -16,6 +16,7 @@ import {
   dropSchema,
   rescheduleSchema,
 } from "@/lib/validation";
+import { resolveOrCreatePerson } from "@/lib/people";
 import { resolveOrCreateProgram } from "@/lib/programs";
 import { findVenueByName, resolveOrCreateVenue } from "@/lib/venues";
 import { computeVariance } from "@/lib/variance";
@@ -125,6 +126,13 @@ async function bookActivityAuthorized(
     return { ok: false, conflicts: unacknowledged };
   }
 
+  // The focal person is typed like the venue and program: a known name is
+  // reused, a new one is saved and suggested next time. Resolved only after
+  // the conflict check, so a booking stopped there leaves no new person behind.
+  const focalPerson = input.focalPersonName
+    ? await resolveOrCreatePerson(input.focalPersonName, input.leadDivisionId)
+    : null;
+
   const activity = await prisma.$transaction(async (tx) => {
     const created = await tx.activity.create({
       data: {
@@ -134,7 +142,7 @@ async function bookActivityAuthorized(
         endDate,
         venueId: venue?.id,
         leadDivisionId: input.leadDivisionId,
-        focalPersonId: input.focalPersonId,
+        focalPersonId: focalPerson?.id,
         participantCount: input.participantCount,
         type: input.type,
         performanceIndicator: input.performanceIndicator,
